@@ -8,7 +8,7 @@ import finalforeach.cosmicreach.worldgen.ChunkColumn;
 import finalforeach.cosmicreach.worldgen.ZoneGenerator;
 import finalforeach.cosmicreach.worldgen.noise.SimplexNoise;
 
-public class ExampleZoneGenerator extends ZoneGenerator {
+public class SuperFlat extends ZoneGenerator {
     private final float baseLevel = 64f;
     private final float seaLevel = 64f;
 
@@ -21,19 +21,18 @@ public class ExampleZoneGenerator extends ZoneGenerator {
     // Fetches on class instantiation, so will not be null
     BlockState airBlock = this.getBlockStateInstance("base:air[default]");
     BlockState stoneBlock = this.getBlockStateInstance("base:stone_basalt[default]");
-    BlockState waterBlock = this.getBlockStateInstance("base:water[default]");
 
     private SimplexNoise noise;
 
     @Override
     public String getSaveKey() {
-        return "exmod:example_terrain";
+        return "exmod:superflat";
     }
 
     @Override
     protected String getName() {
         // Not fetched from the lang file
-        return "Example Terrain";
+        return "Superflat";
     }
 
     // Called on world load/create, after this.seed is set
@@ -68,42 +67,22 @@ public class ExampleZoneGenerator extends ZoneGenerator {
                 col.addChunk(chunk);
             }
 
-            // === Block placing logic ===
+             // === Block placing logic ===
 
 
-            // Loop through all blocks in the chunk
-            for(int localX = 0; localX < Chunk.CHUNK_WIDTH; localX++) {
-                int globalX = chunk.blockX + localX;
-
-                for(int localZ = 0; localZ < Chunk.CHUNK_WIDTH; localZ++) {
-                    int globalZ = chunk.blockZ + localZ;
-
-                    // Only have to sample height once for each Y column (not going to change on the Y axis ;p)
-                    double columnHeight = noise.noise2(globalX * noiseScale, globalZ * noiseScale) * noiseAmplitude + baseLevel;
-
-                    for (int localY = 0; localY < Chunk.CHUNK_WIDTH; localY++) {
-                        int globalY = chunk.blockY + localY;
-
-                        // Below the ground
-                        if(globalY <= columnHeight) {
-                            // Don't want to set existing solid blocks to air in unloaded chunks (what about structures?)
-                            chunk.setBlockState(stoneBlock, localX, localY, localZ);
-                        }
-                        // Above the ground
-                        else {
-                            // Below the sea level
-                            if(globalY <= seaLevel) {
-                                chunk.setBlockState(waterBlock, localX, localY, localZ);
-                            }
-                        }
-                    }
-                }
-            }
+             // Loop through all blocks in the chunk
+             if (chunkY == 0) {
+                 for (int x = 0; x < 16; x++) {
+                     for (int y = 0; y < 16; y++) {
+                         chunk.setBlockState(stoneBlock, x, 0, y);
+                     }
+                 }
+             }
         }
     }
 
     @Override
     public int getDefaultRespawnYLevel() {
-        return 0;
+        return Integer.MIN_VALUE;
     }
 }

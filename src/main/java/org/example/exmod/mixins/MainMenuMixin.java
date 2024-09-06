@@ -24,7 +24,7 @@ public class MainMenuMixin {
 
     @Redirect(method = "create", at = @At(value = "INVOKE", target = "Lfinalforeach/cosmicreach/ui/UIElement;setText(Ljava/lang/String;)V", ordinal = 0))
     private void setText(UIElement startButton, String text) {
-        startButton.setText("Better Button?");
+        startButton.setText("Play?");
     }
 
 
