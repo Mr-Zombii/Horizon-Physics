@@ -1,0 +1,28 @@
+{
+  "id": "${mod_id}",
+  "version": "${mod_version}",
+  "name": "${mod_name}",
+  "description": "${mod_desc}",
+  "authors": [
+    "YOU :D"
+  ],
+  "meta": {
+    "icon": "assets/example-mod/icons/icon.png"
+  },
+  "entrypoints": {
+    "preInit": [
+      "org.example.exmod.ExampleModPreinit"
+    ],
+    "init": [
+      "org.example.exmod.ExampleMod"
+    ]
+  },
+  "mixins": [
+    "example.mixins.json"
+  ],
+  "dependencies": {
+    "cosmic-reach": ">=0.1.50",
+    "puzzle-loader": ">=1.5.2"
+  },
+  "accessManipulator": "example_mod.manipulator"
+}
