@@ -11,9 +11,9 @@ import com.github.puzzle.game.items.IModItem;
 import com.github.puzzle.loader.entrypoint.interfaces.ModInitializer;
 import finalforeach.cosmicreach.entities.EntityCreator;
 import org.example.exmod.commands.Commands;
-import org.example.exmod.entity.BlockEntity69;
+import org.example.exmod.entity.WorldCube;
 import org.example.exmod.items.MoonScepter;
-import org.example.exmod.mesh.LongThread;
+import org.example.exmod.mesh.LoneThread;
 import org.example.exmod.worldgen.SuperFlat;
 import org.greenrobot.eventbus.Subscribe;
 
@@ -21,14 +21,14 @@ import java.io.IOException;
 
 public class ExampleMod implements ModInitializer {
 
-    public static LongThread thread = new LongThread();
+    public static LoneThread thread = new LoneThread();
 
     @Override
     public void onInit() {
         PuzzleRegistries.EVENT_BUS.register(this);
         Commands.register();
 
-        EntityCreator.registerEntityCreator(Constants.MOD_ID + ":entity", BlockEntity69::new);
+        EntityCreator.registerEntityCreator(Constants.MOD_ID + ":entity", WorldCube::new);
 
         IModItem.registerItem(new MoonScepter());
     }

@@ -10,7 +10,10 @@ public class LoneThreadRunnable implements Runnable {
     public void run() {
         while (!runners.isEmpty()) {
             Runnable runnable = runners.removeFirst();
-            runnable.run();
+            if (runnable != null)
+                runnable.run();
+            else
+                System.out.println("Uh oh, There was a null runner");
         }
     }
 }

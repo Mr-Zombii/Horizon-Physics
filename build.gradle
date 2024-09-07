@@ -13,7 +13,8 @@ repositories {
 }
 
 dependencies {
-    implementation(fileTree("./lib"))
+//    implementation(fileTree("./lib"))
+    implementation(files("./lib/PuzzleLoader-69.69.69-bundle.jar"))
 }
 
 processResources {
