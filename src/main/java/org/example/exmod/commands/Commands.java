@@ -6,7 +6,9 @@ import com.github.puzzle.game.util.BlockUtil;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import finalforeach.cosmicreach.ClientSingletons;
 import finalforeach.cosmicreach.blocks.BlockState;
+import finalforeach.cosmicreach.chat.Chat;
 import finalforeach.cosmicreach.gamestates.InGame;
 
 public class Commands {
@@ -30,7 +32,18 @@ public class Commands {
                         )
                 )
         );
+        LiteralArgumentBuilder<PuzzleCommandSource> cmd2 = CommandManager.literal("d");
+        cmd2.executes((c) -> {
+            try {
+                Chat.MAIN_CHAT.sendMessageOrCommand(InGame.world, InGame.getLocalPlayer(), ClientSingletons.account, "/summon funni-blocks:entity");
+            } catch (Exception e) {
+                e.printStackTrace();
+                return 1;
+            }
+            return 0;
+        });
         CommandManager.dispatcher.register(cmd);
+        CommandManager.dispatcher.register(cmd2);
     }
 
 }

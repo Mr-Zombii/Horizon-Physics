@@ -9,19 +9,19 @@ import com.github.puzzle.game.events.OnPreLoadAssetsEvent;
 import com.github.puzzle.game.events.OnRegisterZoneGenerators;
 import com.github.puzzle.game.items.IModItem;
 import com.github.puzzle.loader.entrypoint.interfaces.ModInitializer;
-import com.github.puzzle.loader.mod.AdapterPathPair;
-import com.github.puzzle.loader.mod.ModLocator;
-import com.google.common.collect.ImmutableCollection;
 import finalforeach.cosmicreach.entities.EntityCreator;
 import org.example.exmod.commands.Commands;
 import org.example.exmod.entity.BlockEntity69;
 import org.example.exmod.items.MoonScepter;
+import org.example.exmod.mesh.LongThread;
 import org.example.exmod.worldgen.SuperFlat;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
 
 public class ExampleMod implements ModInitializer {
+
+    public static LongThread thread = new LongThread();
 
     @Override
     public void onInit() {
