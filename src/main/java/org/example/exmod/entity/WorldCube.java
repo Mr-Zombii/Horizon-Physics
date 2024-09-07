@@ -42,11 +42,11 @@ public class WorldCube extends Entity {
                     int globalY = (vec3i.y() * 16) + localY;
 
                     if(globalY <= columnHeight) {
-                        structure.addToBlock(stoneBlock, localX, localY, localZ);
+                        structure.setBlockState(stoneBlock, localX, localY, localZ);
                     } else {
                         if (globalY <= 64) {
                             if (structure.getBlockState(localX, localY, localZ) == air) {
-                                structure.addToBlock(waterBlock, localX, localY, localZ);
+                                structure.setBlockState(waterBlock, localX, localY, localZ);
                             }
                         }
                     }
@@ -66,13 +66,13 @@ public class WorldCube extends Entity {
 
     public WorldCube() {
         chunks = new HashMap<>();
-        for (int x = 0; x < 16; x++) {
-            for (int y = 0; y < 16; y++) {
-                for (int z = 0; z < 16; z++) {
+        for (int x = 0; x < 32; x++) {
+            for (int y = 0; y < 7; y++) {
+                for (int z = 0; z < 32; z++) {
                     Vec3i vec3i = new Vec3i(x, y, z);
 
                     Structure structure = new Structure(
-                            (short) StructureFormat.BLOCKS_ONLY.ordinal(),
+                            (short) 0,
                             new Identifier("base", "test")
                     );
                     generateChunk(structure, vec3i);
@@ -83,7 +83,7 @@ public class WorldCube extends Entity {
 
         Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(this));
 
-        hasGravity = false;
+        hasGravity = true;
 
     }
 
@@ -99,29 +99,28 @@ public class WorldCube extends Entity {
 
     @Override
     public void getBoundingBox(BoundingBox boundingBox) {
-        boundingBox.set(this.localBoundingBox);
-
-        int max_x = 0, max_y = 0, max_z = 0;
-        int min_x = 0, min_y = 0, min_z = 0;
-
-        if (chunks == null) { return; }
-        for (Vec3i pos : chunks.keySet()) {
-            max_x = (16 * (pos.x() + 1)) > max_x ? (16 * (pos.x() + 1)) : max_x;
-            max_y = (16 * (pos.y() + 1)) > max_y ? (16 * (pos.y() + 1)) : max_y;
-            max_z = (16 * (pos.z() + 1)) > max_z ? (16 * (pos.z() + 1)) : max_z;
-
-            min_x = (16 * pos.x()) < min_x ? (16 * pos.x()) : min_x;
-            min_y = (16 * pos.y()) < min_y ? (16 * pos.y()) : min_y;
-            min_z = (16 * pos.z()) < min_z ? (16 * pos.z()) : min_z;
-        }
-        localBoundingBox.max.set(new Vector3(max_x, max_y, max_z).add(position));
-        localBoundingBox.min.set(new Vector3(min_x, min_y, min_z).add(position));
+//        boundingBox.set(this.localBoundingBox);
+//
+//        int max_x = 0, max_y = 0, max_z = 0;
+//        int min_x = 0, min_y = 0, min_z = 0;
+//
+//        if (chunks == null) { return; }
+//        for (Vec3i pos : chunks.keySet()) {
+//            max_x = (16 * (pos.x() + 1)) > max_x ? (16 * (pos.x() + 1)) : max_x;
+//            max_y = (16 * (pos.y() + 1)) > max_y ? (16 * (pos.y() + 1)) : max_y;
+//            max_z = (16 * (pos.z() + 1)) > max_z ? (16 * (pos.z() + 1)) : max_z;
+//
+//            min_x = (16 * pos.x()) < min_x ? (16 * pos.x()) : min_x;
+//            min_y = (16 * pos.y()) < min_y ? (16 * pos.y()) : min_y;
+//            min_z = (16 * pos.z()) < min_z ? (16 * pos.z()) : min_z;
+//        }
+//        localBoundingBox.max.set(new Vector3(max_x, max_y, max_z).add(position));
+//        localBoundingBox.min.set(new Vector3(min_x, min_y, min_z).add(position));
+//        boundingBox.set(localBoundingBox);
+//        boundingBox.update();
+        localBoundingBox.min.set(position);
+        localBoundingBox.max.set(new Vector3(400, 100, 400).add(position));
         boundingBox.set(localBoundingBox);
         boundingBox.update();
-    }
-
-    @Override
-    public void hit(float amount) {
-
     }
 }
