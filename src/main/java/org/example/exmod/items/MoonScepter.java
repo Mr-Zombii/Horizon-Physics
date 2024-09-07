@@ -140,7 +140,7 @@ public class MoonScepter implements IModItem {
                         int bpz = (int) findStartingPos.z + z + 1;
                         BlockState bs = zone.getBlockState(bpx, bpy, bpz);
 
-                        structure.addToBlock(bs == null ? airBlock : bs, x + 1, y, z + 1);
+                        structure.setBlockState(bs == null ? airBlock : bs, x + 1, y, z + 1);
                     }
 
                     if (x == length - 1 && y == height - 1 && z == width - 1) {
