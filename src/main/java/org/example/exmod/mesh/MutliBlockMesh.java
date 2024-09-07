@@ -33,12 +33,13 @@ public class MutliBlockMesh implements IEntityModelInstance {
 
     Map<Vec3i, AtomicReference<Array<MeshData>>> references = new HashMap<>();
 
-    public MutliBlockMesh(WorldCube entity69, Map<Vec3i, Structure> chunks) {
+    public MutliBlockMesh(WorldCube entity69) {
         this.worldCube = entity69;
 
-        for (Vec3i pos : chunks.keySet()) {
+        for (Vec3i pos : entity69.chunks.keySet()) {
+            System.out.println(pos);
             AtomicReference<Array<MeshData>> reference = new AtomicReference<>();
-            ExampleMod.thread.meshChunk(chunks, pos, chunks.get(pos), reference);
+            ExampleMod.thread.meshChunk(entity69.chunks, pos, entity69.chunks.get(pos), reference);
             references.put(pos, reference);
         }
 

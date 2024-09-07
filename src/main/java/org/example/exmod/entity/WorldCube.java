@@ -20,13 +20,14 @@ import java.util.Map;
 
 public class WorldCube extends Entity {
 
-    public Map<Vec3i, Structure> chunks = new HashMap<>();
+    public Map<Vec3i, Structure> chunks;
 
     static SimplexNoise noise = new SimplexNoise(   345324532);
 
     public void generateChunk(Structure structure, Vec3i vec3i) {
         BlockState stoneBlock = BlockState.getInstance("base:stone_basalt[default]");
-        BlockState waterBlock = BlockState.getInstance("base:air[default]");
+        BlockState air = BlockState.getInstance("base:air[default]");
+        BlockState waterBlock = BlockState.getInstance("base:light[power=on,lightRed=0,lightGreen=0,lightBlue=15]");
 
         for(int localX = 0; localX < 16; localX++) {
             int globalX = (vec3i.x() * 16) + localX;
@@ -40,25 +41,31 @@ public class WorldCube extends Entity {
                 for (int localY = 0; localY < 16; localY++) {
                     int globalY = (vec3i.y() * 16) + localY;
 
-                    // Below the ground
                     if(globalY <= columnHeight) {
-                        // Don't want to set existing solid blocks to air in unloaded chunks (what about structures?)
                         structure.addToBlock(stoneBlock, localX, localY, localZ);
+                    } else {
+                        if (globalY <= 64) {
+                            if (structure.getBlockState(localX, localY, localZ) == air) {
+                                structure.addToBlock(waterBlock, localX, localY, localZ);
+                            }
+                        }
                     }
-                    // Above the ground
-//                    else {
-                        // Below the sea level
-//                        if(globalY <= 64f) {
-//                            structure.addToBlock(waterBlock, localX, localY, localZ);
-//                        }
-//                    }
+
+
                 }
             }
         }
     }
 
-    public WorldCube() {
+    public WorldCube(Map<Vec3i, Structure> structureMap) {
+        chunks = structureMap;
 
+        Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(this));
+        hasGravity = false;
+    }
+
+    public WorldCube() {
+        chunks = new HashMap<>();
         for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 16; y++) {
                 for (int z = 0; z < 16; z++) {
@@ -74,7 +81,7 @@ public class WorldCube extends Entity {
             }
         }
 
-        Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(this, chunks));
+        Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(this));
 
         hasGravity = false;
 

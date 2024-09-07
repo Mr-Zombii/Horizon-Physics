@@ -4,6 +4,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.FloatArray;
 import com.badlogic.gdx.utils.IntArray;
 import com.badlogic.gdx.utils.PauseableThread;
+import com.github.puzzle.core.Identifier;
 import com.github.puzzle.game.worldgen.structures.Structure;
 import com.github.puzzle.util.Vec3i;
 import com.llamalad7.mixinextras.lib.apache.commons.tuple.ImmutablePair;
@@ -16,6 +17,7 @@ import finalforeach.cosmicreach.rendering.MeshData;
 import finalforeach.cosmicreach.rendering.RenderOrder;
 import finalforeach.cosmicreach.rendering.shaders.GameShader;
 import finalforeach.cosmicreach.util.ArrayUtils;
+import org.example.exmod.Constants;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -26,6 +28,7 @@ public class LoneThread {
     LoneThreadRunnable runnable = new LoneThreadRunnable();
 
     private static final Array<MeshData> emptyMeshDatas = new Array(false, 0, MeshData.class);
+    private static final Structure emptyStructure = new Structure((short) 0, new Identifier(Constants.MOD_ID, "empty"));
     public boolean started;
 
     private static Structure getStructureAtVec(Map<Vec3i, Structure> structureMap, Vec3i vec3i) {
@@ -33,7 +36,8 @@ public class LoneThread {
         int cy = Math.floorDiv(vec3i.y(), 16);
         int cz = Math.floorDiv(vec3i.z(), 16);
 
-        return structureMap.get(new Vec3i(cx, cy, cz));
+//        return structureMap.get(new Vec3i(cx, cy, cz));
+        return structureMap.get(new Vec3i(cx, cy, cz)) == null ? emptyStructure : structureMap.get(new Vec3i(cx, cy, cz));
     }
 
     public static BlockState getBlockState(Map<Vec3i, Structure> structureMap, Structure candidateChunk, Vec3i pos, int x, int y, int z) {

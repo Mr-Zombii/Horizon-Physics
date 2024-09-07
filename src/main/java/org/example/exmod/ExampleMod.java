@@ -28,7 +28,7 @@ public class ExampleMod implements ModInitializer {
         PuzzleRegistries.EVENT_BUS.register(this);
         Commands.register();
 
-        EntityCreator.registerEntityCreator(Constants.MOD_ID + ":entity", WorldCube::new);
+        EntityCreator.registerEntityCreator(Constants.MOD_ID + ":entity", () -> new WorldCube());
 
         IModItem.registerItem(new MoonScepter());
     }
