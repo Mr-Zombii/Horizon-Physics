@@ -22,6 +22,7 @@ import finalforeach.cosmicreach.rendering.shaders.GameShader;
 import finalforeach.cosmicreach.world.Sky;
 import org.example.exmod.ExampleMod;
 import org.example.exmod.entity.WorldCube;
+import org.example.exmod.util.MatrixUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,7 +68,7 @@ public class MutliBlockMesh implements IEntityModelInstance {
     }
 
     @Override
-    public void render(Entity _entity, Camera camera, Matrix4 matrix4) {
+    public void render(Entity _entity, Camera camera, Matrix4 tmp) {
         if (_entity instanceof WorldCube entity) {
             if (this.meshPairs != null) {
 
@@ -75,10 +76,7 @@ public class MutliBlockMesh implements IEntityModelInstance {
                     Pair<GameMesh, GameShader>[] meshes = meshPairs.get(pos);
                     if (meshes != null && meshes.length != 0) {
 
-                        Matrix4 tmp = matrix4.cpy();
-                        tmp.rotate(new Vector3(1, 0, 0), entity.rotation.x);
-                        tmp.rotate(new Vector3(0, 1, 0), entity.rotation.y);
-                        tmp.rotate(new Vector3(0, 0, 1), entity.rotation.z);
+//                        tmp.setFromEulerAngles(entity.rotation.x, entity.rotation.y, entity.rotation.z);
 
                         if (!BlockModelJson.useIndices) {
                             SharedQuadIndexData.bind();
@@ -160,7 +158,6 @@ public class MutliBlockMesh implements IEntityModelInstance {
                     }
                 }
 //                entity.rotation.z += 0.5f;
-//                entity.rotation.y += 0.1f;
             }
         }
     }

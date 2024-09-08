@@ -7,6 +7,7 @@ import com.github.puzzle.core.Puzzle;
 import com.github.puzzle.core.resources.ResourceLocation;
 import com.github.puzzle.game.items.IModItem;
 import com.github.puzzle.game.items.data.DataTagManifest;
+import com.github.puzzle.game.items.puzzle.BuilderWand;
 import com.github.puzzle.util.Vec3i;
 import finalforeach.cosmicreach.BlockSelection;
 import finalforeach.cosmicreach.blocks.BlockPosition;
@@ -22,6 +23,7 @@ import finalforeach.cosmicreach.world.Zone;
 import org.example.exmod.Constants;
 import org.example.exmod.entity.WorldCube;
 import org.example.exmod.structures.Structure;
+import org.example.exmod.util.SchematicConverter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -76,7 +78,13 @@ public class MoonScepter implements IModItem {
                 setBlockPos(player);
             }
             case CONVERT -> {
-                convert(player);
+                Map<Vec3i, Structure> structureMap = SchematicConverter.structureMapFromSchematic(BuilderWand.clipBoard);
+                Entity e = new WorldCube(structureMap);
+
+                e.setPosition(player.getPosition());
+                InGame.getLocalPlayer().getZone(InGame.world).addEntity(e);
+                Chat.MAIN_CHAT.sendMessage(InGame.world, player, null, "Summoned " + e.entityTypeId + " " + player.getPosition());
+//                convert(player);
             }
             case CONVERT_CHUNK -> {
                 convert2(player);
