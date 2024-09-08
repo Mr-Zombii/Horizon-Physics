@@ -5,7 +5,6 @@ import com.badlogic.gdx.utils.FloatArray;
 import com.badlogic.gdx.utils.IntArray;
 import com.badlogic.gdx.utils.PauseableThread;
 import com.github.puzzle.core.Identifier;
-import com.github.puzzle.game.worldgen.structures.Structure;
 import com.github.puzzle.util.Vec3i;
 import com.llamalad7.mixinextras.lib.apache.commons.tuple.ImmutablePair;
 import com.llamalad7.mixinextras.lib.apache.commons.tuple.Pair;
@@ -18,6 +17,7 @@ import finalforeach.cosmicreach.rendering.RenderOrder;
 import finalforeach.cosmicreach.rendering.shaders.GameShader;
 import finalforeach.cosmicreach.util.ArrayUtils;
 import org.example.exmod.Constants;
+import org.example.exmod.structures.Structure;
 
 import java.util.Arrays;
 import java.util.Map;

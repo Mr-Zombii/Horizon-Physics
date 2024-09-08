@@ -2,16 +2,17 @@ package org.example.exmod.entity;
 
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
+import com.badlogic.gdx.math.collision.OrientedBoundingBox;
 import com.github.puzzle.core.Identifier;
-import com.github.puzzle.game.worldgen.structures.Structure;
-import com.github.puzzle.game.worldgen.structures.StructureFormat;
 import com.github.puzzle.util.Vec3i;
 import finalforeach.cosmicreach.Threads;
 import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.entities.Entity;
 import finalforeach.cosmicreach.world.Zone;
 import finalforeach.cosmicreach.worldgen.noise.SimplexNoise;
+import org.example.exmod.Constants;
 import org.example.exmod.mesh.MutliBlockMesh;
+import org.example.exmod.structures.Structure;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,12 +23,16 @@ public class WorldCube extends Entity {
 
     public Map<Vec3i, Structure> chunks;
 
-    static SimplexNoise noise = new SimplexNoise(   345324532);
+    static SimplexNoise noise = new SimplexNoise(345324532);
+
+    public Vector3 rotation = new Vector3(0, 0, 0);
 
     public void generateChunk(Structure structure, Vec3i vec3i) {
-        BlockState stoneBlock = BlockState.getInstance("base:stone_basalt[default]");
         BlockState air = BlockState.getInstance("base:air[default]");
-        BlockState waterBlock = BlockState.getInstance("base:light[power=on,lightRed=0,lightGreen=0,lightBlue=15]");
+        BlockState stoneBlock = BlockState.getInstance("base:stone_basalt[default]");
+        BlockState waterBlock = BlockState.getInstance("base:water[default]");
+//        BatchedZoneRenderer;
+//        ExperimentalNaiveZoneRenderer
 
         for(int localX = 0; localX < 16; localX++) {
             int globalX = (vec3i.x() * 16) + localX;
@@ -57,14 +62,21 @@ public class WorldCube extends Entity {
         }
     }
 
+    public OrientedBoundingBox entityBoundingBox;
+
     public WorldCube(Map<Vec3i, Structure> structureMap) {
+        super(new Identifier(Constants.MOD_ID, "entity").toString());
         chunks = structureMap;
 
         Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(this));
         hasGravity = false;
+
+        entityBoundingBox = new OrientedBoundingBox();
+        localBoundingBox = entityBoundingBox.getBounds();
     }
 
     public WorldCube() {
+        super(new Identifier(Constants.MOD_ID, "entity").toString());
         chunks = new HashMap<>();
         for (int x = 0; x < 32; x++) {
             for (int y = 0; y < 7; y++) {
@@ -83,15 +95,18 @@ public class WorldCube extends Entity {
 
         Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(this));
 
+        entityBoundingBox = new OrientedBoundingBox();
+        localBoundingBox = entityBoundingBox.getBounds();
         hasGravity = true;
 
     }
 
     @Override
     public void update(Zone zone, double deltaTime) {
-        this.localBoundingBox.min.add(this.position);
-        this.localBoundingBox.max.add(this.position);
-        this.localBoundingBox.update();
+//        this.localBoundingBox.min.add(this.position);
+//        this.localBoundingBox.max.add(this.position);
+        localBoundingBox = entityBoundingBox.getBounds();
+//        this.localBoundingBox.update();
 
         getBoundingBox(globalBoundingBox);
         super.updateEntityChunk(zone);

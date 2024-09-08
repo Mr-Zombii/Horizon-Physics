@@ -1,17 +1,14 @@
 package org.example.exmod.items;
 
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Queue;
 import com.github.puzzle.core.Identifier;
 import com.github.puzzle.core.Puzzle;
 import com.github.puzzle.core.resources.ResourceLocation;
 import com.github.puzzle.game.items.IModItem;
 import com.github.puzzle.game.items.data.DataTagManifest;
-import com.github.puzzle.game.items.puzzle.BuilderWand;
-import com.github.puzzle.game.util.BlockUtil;
-import com.github.puzzle.game.worldgen.structures.Structure;
 import com.github.puzzle.util.Vec3i;
 import finalforeach.cosmicreach.BlockSelection;
-import finalforeach.cosmicreach.accounts.Account;
 import finalforeach.cosmicreach.blocks.BlockPosition;
 import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.chat.Chat;
@@ -20,9 +17,11 @@ import finalforeach.cosmicreach.entities.player.Player;
 import finalforeach.cosmicreach.gamestates.InGame;
 import finalforeach.cosmicreach.items.ItemSlot;
 import finalforeach.cosmicreach.settings.ControlSettings;
+import finalforeach.cosmicreach.world.BlockSetter;
 import finalforeach.cosmicreach.world.Zone;
 import org.example.exmod.Constants;
 import org.example.exmod.entity.WorldCube;
+import org.example.exmod.structures.Structure;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,6 +42,7 @@ public class MoonScepter implements IModItem {
 
     public enum WANDMODES {
         SELECTPOS("select-positions"),
+        CONVERT_CHUNK("conv_chunk"),
         CONVERT("convert");
 
         public final String mode;
@@ -55,6 +55,7 @@ public class MoonScepter implements IModItem {
             return switch (str) {
                 case "Select Positions" -> SELECTPOS;
                 case "Convert" -> CONVERT;
+                case "Conv Chunk" -> CONVERT_CHUNK;
                 default -> SELECTPOS;
             };
         }
@@ -77,6 +78,9 @@ public class MoonScepter implements IModItem {
             case CONVERT -> {
                 convert(player);
             }
+            case CONVERT_CHUNK -> {
+                convert2(player);
+            }
         }
     }
 
@@ -96,6 +100,35 @@ public class MoonScepter implements IModItem {
             l += 1;
         }
         return l;
+    }
+
+    private void convert2(Player player) {
+        BlockPosition position = BlockSelection.getBlockPositionLookingAt();
+        if(position == null) return;
+
+        Queue<BlockPosition> positions = new Queue<>();
+
+        Map<Vec3i, Structure> structureMap = new HashMap<>();
+        Structure structure = new Structure((short) 0, new Identifier(Constants.MOD_ID, "ea"));
+        for (int x = 0; x < 16; x++) {
+            for (int y = 0; y < 16; y++) {
+                for (int z = 0; z < 16; z++) {
+                    BlockState state = position.chunk.getBlockState(x, y, z);
+                    if (state != null) {
+                        structure.setBlockState(state, x, y, z);
+                        positions.addLast(new BlockPosition(position.chunk, x, y, z));
+                    }
+                }
+            }
+        }
+        structureMap.put(new Vec3i(0, 0, 0), structure);
+        BlockSetter.get().replaceBlocks(position.getZone(), BlockState.getInstance("base:air[default]"), positions);
+
+        Entity e = new WorldCube(structureMap);
+        e.setPosition(position.chunk.blockX, position.chunk.blockY, position.chunk.blockZ);
+        position.getZone().addEntity(e);
+        position.chunk.getMeshGroup().flagForRemeshing(true);
+        Chat.MAIN_CHAT.sendMessage(InGame.world, player, null, "Summoned " + e.entityTypeId);
     }
 
     private void convert(Player player) {
