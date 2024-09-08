@@ -17,6 +17,8 @@ import finalforeach.cosmicreach.entities.Entity;
 import finalforeach.cosmicreach.entities.player.Player;
 import finalforeach.cosmicreach.gamestates.InGame;
 import finalforeach.cosmicreach.items.ItemSlot;
+import finalforeach.cosmicreach.rendering.BatchedZoneRenderer;
+import finalforeach.cosmicreach.rendering.IZoneRenderer;
 import finalforeach.cosmicreach.settings.ControlSettings;
 import finalforeach.cosmicreach.world.BlockSetter;
 import finalforeach.cosmicreach.world.Zone;
@@ -103,7 +105,7 @@ public class MoonScepter implements IModItem {
         return vec;
     }
 
-    private static int cubize(int l) {
+    public static int cubize(int l) {
         while (l % 16 != 0) {
             l += 1;
         }
