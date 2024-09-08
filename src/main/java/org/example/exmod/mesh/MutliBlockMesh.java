@@ -66,9 +66,6 @@ public class MutliBlockMesh implements IEntityModelInstance {
 
     }
 
-    float rotZ = 0;
-    float rotY = 0;
-
     @Override
     public void render(Entity _entity, Camera camera, Matrix4 matrix4) {
         if (_entity instanceof WorldCube entity) {
@@ -77,16 +74,11 @@ public class MutliBlockMesh implements IEntityModelInstance {
                 for (Vec3i pos : worldCube.chunks.keySet()) {
                     Pair<GameMesh, GameShader>[] meshes = meshPairs.get(pos);
                     if (meshes != null && meshes.length != 0) {
+
                         Matrix4 tmp = matrix4.cpy();
-                        tmp.rotate(new Vector3(0, 0, 1), rotZ);
-                        tmp.rotate(new Vector3(0, 1, 0), rotY);
-
-                        Matrix4 s = new Matrix4();
-                        tmp.rotate(new Vector3(0, 0, 1), rotZ);
-                        tmp.rotate(new Vector3(0, 1, 0), rotY);
-                        entity.entityBoundingBox.setTransform(s);
-
-//                    tmp.translate(pos.x() * 16, pos.y() * 16, pos.z() * 16);
+                        tmp.rotate(new Vector3(1, 0, 0), entity.rotation.x);
+                        tmp.rotate(new Vector3(0, 1, 0), entity.rotation.y);
+                        tmp.rotate(new Vector3(0, 0, 1), entity.rotation.z);
 
                         if (!BlockModelJson.useIndices) {
                             SharedQuadIndexData.bind();
@@ -167,11 +159,13 @@ public class MutliBlockMesh implements IEntityModelInstance {
                         }
                     }
                 }
-                rotZ += 0.5f;
-                rotY += 0.1f;
+//                entity.rotation.z += 0.5f;
+//                entity.rotation.y += 0.1f;
             }
         }
     }
+
+
 
     private Pair<GameMesh, GameShader>[] finalizeMeshes(MeshData[] meshData) {
         Pair<GameMesh, GameShader>[] finalizedMeshes = new ImmutablePair[3];

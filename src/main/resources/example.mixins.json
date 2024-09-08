@@ -4,6 +4,9 @@
   "package": "org.example.exmod.mixins",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "BoundingBoxMixin",
+    "InGameMixin",
+    "IntersectorMixin",
     "MainMenuMixin"
   ],
   "client": [],
