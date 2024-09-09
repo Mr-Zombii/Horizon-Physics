@@ -1,6 +1,5 @@
 package org.example.exmod;
 
-import com.badlogic.gdx.physics.bullet.Bullet;
 import com.github.puzzle.core.PuzzleRegistries;
 import com.github.puzzle.core.localization.ILanguageFile;
 import com.github.puzzle.core.localization.LanguageManager;
