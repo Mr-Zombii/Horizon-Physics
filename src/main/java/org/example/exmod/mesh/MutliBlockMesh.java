@@ -39,13 +39,11 @@ public class MutliBlockMesh implements IEntityModelInstance {
     public MutliBlockMesh(WorldCube entity69) {
         this.worldCube = entity69;
 
-        for (Vec3i pos : entity69.chunks.keySet()) {
-            System.out.println(pos);
+        entity69.world.forEachChunk((pos, chunk) -> {
             AtomicReference<Array<MeshData>> reference = new AtomicReference<>();
-            ExampleMod.thread.meshChunk(entity69.chunks, pos, entity69.chunks.get(pos), reference);
-            ExampleMod.thread.meshChunk(entity69.chunks, pos, entity69.chunks.get(pos), reference);
+            ExampleMod.thread.meshChunk(entity69.world, pos, chunk, reference);
             references.put(pos, reference);
-        }
+        });
 
         shader = ChunkShader.DEFAULT_BLOCK_SHADER;
     }
@@ -72,7 +70,7 @@ public class MutliBlockMesh implements IEntityModelInstance {
         if (_entity instanceof WorldCube entity) {
             if (this.meshPairs != null) {
 
-                for (Vec3i pos : worldCube.chunks.keySet()) {
+                entity.world.forEachChunk(pos -> {
                     Pair<GameMesh, GameShader>[] meshes = meshPairs.get(pos);
                     if (meshes != null && meshes.length != 0) {
 
@@ -156,7 +154,8 @@ public class MutliBlockMesh implements IEntityModelInstance {
 //                        }
                         }
                     }
-                }
+                });
+
 //                entity.rotation.z += 0.5f;
             }
         }

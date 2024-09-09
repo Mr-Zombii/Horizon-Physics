@@ -3,7 +3,6 @@ package org.example.exmod.items;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Queue;
 import com.github.puzzle.core.Identifier;
-import com.github.puzzle.core.Puzzle;
 import com.github.puzzle.core.resources.ResourceLocation;
 import com.github.puzzle.game.items.IModItem;
 import com.github.puzzle.game.items.data.DataTagManifest;
@@ -17,18 +16,13 @@ import finalforeach.cosmicreach.entities.Entity;
 import finalforeach.cosmicreach.entities.player.Player;
 import finalforeach.cosmicreach.gamestates.InGame;
 import finalforeach.cosmicreach.items.ItemSlot;
-import finalforeach.cosmicreach.rendering.BatchedZoneRenderer;
-import finalforeach.cosmicreach.rendering.IZoneRenderer;
 import finalforeach.cosmicreach.settings.ControlSettings;
 import finalforeach.cosmicreach.world.BlockSetter;
-import finalforeach.cosmicreach.world.Zone;
 import org.example.exmod.Constants;
 import org.example.exmod.entity.WorldCube;
-import org.example.exmod.structures.Structure;
+import org.example.exmod.world.Structure;
+import org.example.exmod.world.StructureWorld;
 import org.example.exmod.util.SchematicConverter;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class MoonScepter implements IModItem {
 
@@ -80,8 +74,8 @@ public class MoonScepter implements IModItem {
                 setBlockPos(player);
             }
             case CONVERT -> {
-                Map<Vec3i, Structure> structureMap = SchematicConverter.structureMapFromSchematic(BuilderWand.clipBoard);
-                Entity e = new WorldCube(structureMap);
+                StructureWorld world = SchematicConverter.structureMapFromSchematic(BuilderWand.clipBoard);
+                Entity e = new WorldCube(world);
 
                 e.setPosition(player.getPosition());
                 InGame.getLocalPlayer().getZone(InGame.world).addEntity(e);
@@ -118,7 +112,7 @@ public class MoonScepter implements IModItem {
 
         Queue<BlockPosition> positions = new Queue<>();
 
-        Map<Vec3i, Structure> structureMap = new HashMap<>();
+        StructureWorld world = new StructureWorld();
         Structure structure = new Structure((short) 0, new Identifier(Constants.MOD_ID, "ea"));
         for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 16; y++) {
@@ -131,75 +125,14 @@ public class MoonScepter implements IModItem {
                 }
             }
         }
-        structureMap.put(new Vec3i(0, 0, 0), structure);
+        world.putChunkAt(new Vec3i(0, 0, 0), structure);
         BlockSetter.get().replaceBlocks(position.getZone(), BlockState.getInstance("base:air[default]"), positions);
 
-        Entity e = new WorldCube(structureMap);
+        Entity e = new WorldCube(world);
         e.setPosition(position.chunk.blockX, position.chunk.blockY, position.chunk.blockZ);
         position.getZone().addEntity(e);
         position.chunk.getMeshGroup().flagForRemeshing(true);
         Chat.MAIN_CHAT.sendMessage(InGame.world, player, null, "Summoned " + e.entityTypeId);
-    }
-
-    private void convert(Player player) {
-        if(MoonScepter.pos1 == null || MoonScepter.pos2 == null) return;
-
-        BlockState airBlock = BlockState.getInstance("base:air[default]");
-
-        Vector3 pos1 = MoonScepter.pos1.cpy();
-        Vector3 pos2 = MoonScepter.pos2.cpy();
-
-        if(pos1.y < pos2.y) {
-            Vector3 newBottomVec = pos1;
-            pos1 = pos2;
-            pos2 = newBottomVec;
-        }
-        pos1.y += 1;
-        int length = (int)Math.floor(Math.abs(pos2.x - pos1.x));  // Length along x-axis
-        int height = (int)Math.floor(Math.abs(pos2.y - pos1.y));  // Height along y-axis
-        int width = (int)Math.floor(Math.abs(pos2.z - pos1.z));
-        int oldLength = length;
-        int oldHeight = height;
-        int oldWidth = width;
-        length = cubize(length);
-        height = cubize(height);
-        width = cubize(width);
-
-        Vector3 findStartingPos = FindStartingPos(pos1, pos2, length, height, width);
-        Zone zone = player.getZone(InGame.world);
-
-        Map<Vec3i, Structure> structureMap = new HashMap<>();
-        Structure structure = new Structure((short) 0, new Identifier(Puzzle.MOD_ID, "e"));
-        for (int x = -1; x < length; x++) {
-            for (int y = 0; y < height; y++) {
-                for (int z = -1; z < width; z++) {
-                    int structX = (length / 16);
-                    int structY = (height / 16);
-                    int structZ = (width / 16);
-
-                    if (x < oldLength && y < oldHeight && z < oldWidth) {
-                        int bpx = (int) findStartingPos.x + x + 1;
-                        int bpy = (int) findStartingPos.y + y;
-                        int bpz = (int) findStartingPos.z + z + 1;
-                        BlockState bs = zone.getBlockState(bpx, bpy, bpz);
-
-                        structure.setBlockState(bs == null ? airBlock : bs, x + 1, y, z + 1);
-                    }
-
-                    if (x == length - 1 && y == height - 1 && z == width - 1) {
-                        structureMap.put(new Vec3i(structX, structY, structZ), structure);
-                        structure = new Structure((short) 0, new Identifier(Puzzle.MOD_ID, "e"));
-                    }
-                }
-            }
-        }
-//        Entity e = EntityCreator.get(Identifier.of(Constants.MOD_ID, "entity").toString());
-        Entity e = new WorldCube(structureMap);
-
-        e.setPosition(player.getPosition());
-        zone.addEntity(e);
-        Chat.MAIN_CHAT.sendMessage(InGame.world, player, null, "Summoned " + e.entityTypeId);
-
     }
 
     private void setBlockPos(Player player) {

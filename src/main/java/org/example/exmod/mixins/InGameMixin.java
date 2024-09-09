@@ -88,17 +88,30 @@ public class InGameMixin {
         Vector3 c101 = bb.getCorner101(new Vector3());
         Vector3 c110 = bb.getCorner110(new Vector3());
         Vector3 c111 = bb.getCorner111(new Vector3());
+
+        shapeRenderer.setColor(Color.RED);
         shapeRenderer.line(c000,c001);
+        shapeRenderer.setColor(Color.GRAY);
         shapeRenderer.line(c000,c100);
+        shapeRenderer.setColor(Color.GREEN);
         shapeRenderer.line(c000,c010);
+        shapeRenderer.setColor(Color.DARK_GRAY);
         shapeRenderer.line(c101,c001);
+        shapeRenderer.setColor(Color.ORANGE);
         shapeRenderer.line(c101,c100);
+        shapeRenderer.setColor(Color.BLACK);
         shapeRenderer.line(c101,c111);
+        shapeRenderer.setColor(Color.YELLOW);
         shapeRenderer.line(c011,c010);
+        shapeRenderer.setColor(Color.LIME);
         shapeRenderer.line(c011,c111);
+        shapeRenderer.setColor(Color.BROWN);
         shapeRenderer.line(c011,c001);
+        shapeRenderer.setColor(Color.TAN);
         shapeRenderer.line(c110,c111);
+        shapeRenderer.setColor(Color.MAGENTA);
         shapeRenderer.line(c110,c010);
+        shapeRenderer.setColor(Color.PURPLE);
         shapeRenderer.line(c110,c100);
     }
 

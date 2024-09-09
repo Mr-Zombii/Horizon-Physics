@@ -17,10 +17,10 @@ import finalforeach.cosmicreach.rendering.RenderOrder;
 import finalforeach.cosmicreach.rendering.shaders.GameShader;
 import finalforeach.cosmicreach.util.ArrayUtils;
 import org.example.exmod.Constants;
-import org.example.exmod.structures.Structure;
+import org.example.exmod.world.Structure;
+import org.example.exmod.world.StructureWorld;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class LoneThread {
@@ -31,71 +31,14 @@ public class LoneThread {
     private static final Structure emptyStructure = new Structure((short) 0, new Identifier(Constants.MOD_ID, "empty"));
     public boolean started;
 
-    private static Structure getStructureAtVec(Map<Vec3i, Structure> structureMap, Vec3i vec3i) {
-        int cx = Math.floorDiv(vec3i.x(), 16);
-        int cy = Math.floorDiv(vec3i.y(), 16);
-        int cz = Math.floorDiv(vec3i.z(), 16);
-
-//        return structureMap.get(new Vec3i(cx, cy, cz));
-        return structureMap.get(new Vec3i(cx, cy, cz)) == null ? emptyStructure : structureMap.get(new Vec3i(cx, cy, cz));
-    }
-
-    public static BlockState getBlockState(Map<Vec3i, Structure> structureMap, Structure candidateChunk, Vec3i pos, int x, int y, int z) {
-        return get(structureMap, candidateChunk, pos, x, y, z, Structure::getBlockState);
-    }
-
-    public static <T> T get(Map<Vec3i, Structure> structureMap, Structure candidateChunk, Vec3i pos, int x, int y, int z, BlockPositionFunction<T> function) {
-        int cx = Math.floorDiv(x, 16);
-        int cy = Math.floorDiv(y, 16);
-        int cz = Math.floorDiv(z, 16);
-        Structure c;
-        if (candidateChunk != null && pos.x() == cx && pos.y() == cy && pos.z() == cz) {
-            c = candidateChunk;
-        } else {
-            c = getStructureAtVec(structureMap, new Vec3i(x, y, z));
-        }
-
-        if (c == null) {
-            return null;
-        } else {
-            x -= 16 * cx;
-            y -= 16 * cy;
-            z -= 16 * cz;
-            return function.apply(c, x, y, z);
-        }
-    }
-
-    private static BlockState getBlockState(Map<Vec3i, Structure> structureMap, Pair<Vec3i, Structure> a, Pair<Vec3i, Structure> b, int x, int y, int z) {
-        int cx = Math.floorDiv(x, 16);
-        int cy = Math.floorDiv(y, 16);
-        int cz = Math.floorDiv(z, 16);
-        Structure c;
-        if (a != null && a.getLeft().x() == cx && a.getLeft().y() == cy && a.getLeft().z() == cz) {
-            c = a.getRight();
-        } else if (b != null && b.getLeft().x() == cx && b.getLeft().y() == cy && b.getLeft().z() == cz) {
-            c = b.getRight();
-        } else {
-            c = getStructureAtVec(structureMap, new Vec3i(x, y, z));
-        }
-
-        if (c == null) {
-            return null;
-        } else {
-            x -= 16 * cx;
-            y -= 16 * cy;
-            z -= 16 * cz;
-            return c.getBlockState(x, y, z);
-        }
-    }
-
-    static Array<MeshData> getMeshData(Map<Vec3i, Structure> structureMap, Vec3i pos, Structure chunk) {
+    static Array<MeshData> getMeshData(StructureWorld world, Vec3i pos, Structure chunk) {
         BlockState airBlockState = Block.AIR.getDefaultBlockState();
         Pair<Vec3i, Structure> structurePair = new ImmutablePair<>(pos, chunk);
         if (chunk.isEntirely(airBlockState)) {
             return emptyMeshDatas;
         } else {
             boolean isEntirelyOpaque = chunk.isEntirelyOpaque();
-            if (isEntirelyOpaque && chunk.isCulledByAdjacentChunks(pos, structureMap)) {
+            if (isEntirelyOpaque && chunk.isCulledByAdjacentChunks(pos, world)) {
                 return emptyMeshDatas;
             } else {
                 Array<MeshData> meshDatas = new Array(3);
@@ -105,12 +48,12 @@ public class LoneThread {
 
                 Arrays.fill(blockLightLevels, (short) 4095);
 
-                Pair<Vec3i, Structure> chunkNegX = structureMap.get(new Vec3i(pos.x() - 1, pos.y(), pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x() - 1, pos.y(), pos.z()), structureMap.get(new Vec3i(pos.x() - 1, pos.y(), pos.z()))) : null;
-                Pair<Vec3i, Structure> chunkPosX = structureMap.get(new Vec3i(pos.x() + 1, pos.y(), pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x() + 1, pos.y(), pos.z()), structureMap.get(new Vec3i(pos.x() + 1, pos.y(), pos.z()))) : null;
-                Pair<Vec3i, Structure> chunkNegY = structureMap.get(new Vec3i(pos.x(), pos.y() - 1, pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y() - 1, pos.z()), structureMap.get(new Vec3i(pos.x(), pos.y() - 1, pos.z()))) : null;
-                Pair<Vec3i, Structure> chunkPosY = structureMap.get(new Vec3i(pos.x(), pos.y() + 1, pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y() + 1, pos.z()), structureMap.get(new Vec3i(pos.x(), pos.y() + 1, pos.z()))) : null;
-                Pair<Vec3i, Structure> chunkNegZ = structureMap.get(new Vec3i(pos.x(), pos.y(), pos.z() - 1)) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y(), pos.z() - 1), structureMap.get(new Vec3i(pos.x(), pos.y(), pos.z() - 1))) : null;
-                Pair<Vec3i, Structure> chunkPosZ = structureMap.get(new Vec3i(pos.x(), pos.y(), pos.z() + 1)) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y(), pos.z() + 1), structureMap.get(new Vec3i(pos.x(), pos.y(), pos.z() + 1))) : null;
+                Pair<Vec3i, Structure> chunkNegX = world.getChunkAt(new Vec3i(pos.x() - 1, pos.y(), pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x() - 1, pos.y(), pos.z()), world.getChunkAt(new Vec3i(pos.x() - 1, pos.y(), pos.z()))) : null;
+                Pair<Vec3i, Structure> chunkPosX = world.getChunkAt(new Vec3i(pos.x() + 1, pos.y(), pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x() + 1, pos.y(), pos.z()), world.getChunkAt(new Vec3i(pos.x() + 1, pos.y(), pos.z()))) : null;
+                Pair<Vec3i, Structure> chunkNegY = world.getChunkAt(new Vec3i(pos.x(), pos.y() - 1, pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y() - 1, pos.z()), world.getChunkAt(new Vec3i(pos.x(), pos.y() - 1, pos.z()))) : null;
+                Pair<Vec3i, Structure> chunkPosY = world.getChunkAt(new Vec3i(pos.x(), pos.y() + 1, pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y() + 1, pos.z()), world.getChunkAt(new Vec3i(pos.x(), pos.y() + 1, pos.z()))) : null;
+                Pair<Vec3i, Structure> chunkNegZ = world.getChunkAt(new Vec3i(pos.x(), pos.y(), pos.z() - 1)) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y(), pos.z() - 1), world.getChunkAt(new Vec3i(pos.x(), pos.y(), pos.z() - 1))) : null;
+                Pair<Vec3i, Structure> chunkPosZ = world.getChunkAt(new Vec3i(pos.x(), pos.y(), pos.z() + 1)) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y(), pos.z() + 1), world.getChunkAt(new Vec3i(pos.x(), pos.y(), pos.z() + 1))) : null;
 
                 for(int idx = 0; idx < 4096; idx++) {
                     int localY = idx / 256;
@@ -124,12 +67,12 @@ public class LoneThread {
                             int globalX = (pos.x() * 16) + localX;
                             int globalY = (pos.y() * 16) + localY;
                             int globalZ = (pos.z() * 16) + localZ;
-                            BlockState bnx = getBlockState(structureMap, structurePair, chunkNegX, globalX - 1, globalY, globalZ);
-                            BlockState bpx = getBlockState(structureMap, structurePair, chunkPosX, globalX + 1, globalY, globalZ);
-                            BlockState bny = getBlockState(structureMap, structurePair, chunkNegY, globalX, globalY - 1, globalZ);
-                            BlockState bpy = getBlockState(structureMap, structurePair, chunkPosY, globalX, globalY + 1, globalZ);
-                            BlockState bnz = getBlockState(structureMap, structurePair, chunkNegZ, globalX, globalY, globalZ - 1);
-                            BlockState bpz = getBlockState(structureMap, structurePair, chunkPosZ, globalX, globalY, globalZ + 1);
+                            BlockState bnx = world.getBlockState(structurePair, chunkNegX, globalX - 1, globalY, globalZ);
+                            BlockState bpx = world.getBlockState(structurePair, chunkPosX, globalX + 1, globalY, globalZ);
+                            BlockState bny = world.getBlockState(structurePair, chunkNegY, globalX, globalY - 1, globalZ);
+                            BlockState bpy = world.getBlockState(structurePair, chunkPosY, globalX, globalY + 1, globalZ);
+                            BlockState bnz = world.getBlockState(structurePair, chunkNegZ, globalX, globalY, globalZ - 1);
+                            BlockState bpz = world.getBlockState(structurePair, chunkPosZ, globalX, globalY, globalZ + 1);
                             int completeCullMask = 0;
                             completeCullMask |= bnx != null && !bnx.isPosXFaceOccluding ? 0 : 1;
                             completeCullMask |= bpx != null && !bpx.isNegXFaceOccluding ? 0 : 2;
@@ -147,26 +90,26 @@ public class LoneThread {
                                 opaqueBitmask |= bpy != null && !bpy.isNegYFaceOccluding && (!cullsSelf || block != bpy.getBlock() || !bpy.isSelfNegYFaceOccluding) ? 0 : 8;
                                 opaqueBitmask |= bnz != null && !bnz.isPosZFaceOccluding && (!cullsSelf || block != bnz.getBlock() || !bnz.isSelfPosZFaceOccluding) ? 0 : 16;
                                 opaqueBitmask |= bpz != null && !bpz.isNegZFaceOccluding && (!cullsSelf || block != bpz.getBlock() || !bpz.isSelfNegZFaceOccluding) ? 0 : 32;
-                                BlockState bnxnynz = getBlockState(structureMap, chunk, pos, globalX - 1, globalY - 1, globalZ - 1);
-                                BlockState bnxny0z = getBlockState(structureMap, chunk, pos, globalX - 1, globalY - 1, globalZ);
-                                BlockState bnxnypz = getBlockState(structureMap, chunk, pos, globalX - 1, globalY - 1, globalZ + 1);
-                                BlockState bnx0ynz = getBlockState(structureMap, chunk, pos, globalX - 1, globalY, globalZ - 1);
-                                BlockState bnx0ypz = getBlockState(structureMap, chunk, pos, globalX - 1, globalY, globalZ + 1);
-                                BlockState bnxpynz = getBlockState(structureMap, chunk, pos, globalX - 1, globalY + 1, globalZ - 1);
-                                BlockState bnxpy0z = getBlockState(structureMap, chunk, pos, globalX - 1, globalY + 1, globalZ);
-                                BlockState bnxpypz = getBlockState(structureMap, chunk, pos, globalX - 1, globalY + 1, globalZ + 1);
-                                BlockState b0xnynz = getBlockState(structureMap, chunk, pos, globalX, globalY - 1, globalZ - 1);
-                                BlockState b0xnypz = getBlockState(structureMap, chunk, pos, globalX, globalY - 1, globalZ + 1);
-                                BlockState b0xpynz = getBlockState(structureMap, chunk, pos, globalX, globalY + 1, globalZ - 1);
-                                BlockState b0xpypz = getBlockState(structureMap, chunk, pos, globalX, globalY + 1, globalZ + 1);
-                                BlockState bpxnynz = getBlockState(structureMap, chunk, pos, globalX + 1, globalY - 1, globalZ - 1);
-                                BlockState bpxny0z = getBlockState(structureMap, chunk, pos, globalX + 1, globalY - 1, globalZ);
-                                BlockState bpxnypz = getBlockState(structureMap, chunk, pos, globalX + 1, globalY - 1, globalZ + 1);
-                                BlockState bpx0ynz = getBlockState(structureMap, chunk, pos, globalX + 1, globalY, globalZ - 1);
-                                BlockState bpx0ypz = getBlockState(structureMap, chunk, pos, globalX + 1, globalY, globalZ + 1);
-                                BlockState bpxpynz = getBlockState(structureMap, chunk, pos, globalX + 1, globalY + 1, globalZ - 1);
-                                BlockState bpxpy0z = getBlockState(structureMap, chunk, pos, globalX + 1, globalY + 1, globalZ);
-                                BlockState bpxpypz = getBlockState(structureMap, chunk, pos, globalX + 1, globalY + 1, globalZ + 1);
+                                BlockState bnxnynz = world.getBlockState(chunk, pos, globalX - 1, globalY - 1, globalZ - 1);
+                                BlockState bnxny0z = world.getBlockState(chunk, pos, globalX - 1, globalY - 1, globalZ);
+                                BlockState bnxnypz = world.getBlockState(chunk, pos, globalX - 1, globalY - 1, globalZ + 1);
+                                BlockState bnx0ynz = world.getBlockState(chunk, pos, globalX - 1, globalY, globalZ - 1);
+                                BlockState bnx0ypz = world.getBlockState(chunk, pos, globalX - 1, globalY, globalZ + 1);
+                                BlockState bnxpynz = world.getBlockState(chunk, pos, globalX - 1, globalY + 1, globalZ - 1);
+                                BlockState bnxpy0z = world.getBlockState(chunk, pos, globalX - 1, globalY + 1, globalZ);
+                                BlockState bnxpypz = world.getBlockState(chunk, pos, globalX - 1, globalY + 1, globalZ + 1);
+                                BlockState b0xnynz = world.getBlockState(chunk, pos, globalX, globalY - 1, globalZ - 1);
+                                BlockState b0xnypz = world.getBlockState(chunk, pos, globalX, globalY - 1, globalZ + 1);
+                                BlockState b0xpynz = world.getBlockState(chunk, pos, globalX, globalY + 1, globalZ - 1);
+                                BlockState b0xpypz = world.getBlockState(chunk, pos, globalX, globalY + 1, globalZ + 1);
+                                BlockState bpxnynz = world.getBlockState(chunk, pos, globalX + 1, globalY - 1, globalZ - 1);
+                                BlockState bpxny0z = world.getBlockState(chunk, pos, globalX + 1, globalY - 1, globalZ);
+                                BlockState bpxnypz = world.getBlockState(chunk, pos, globalX + 1, globalY - 1, globalZ + 1);
+                                BlockState bpx0ynz = world.getBlockState(chunk, pos, globalX + 1, globalY, globalZ - 1);
+                                BlockState bpx0ypz = world.getBlockState(chunk, pos, globalX + 1, globalY, globalZ + 1);
+                                BlockState bpxpynz = world.getBlockState(chunk, pos, globalX + 1, globalY + 1, globalZ - 1);
+                                BlockState bpxpy0z = world.getBlockState(chunk, pos, globalX + 1, globalY + 1, globalZ);
+                                BlockState bpxpypz = world.getBlockState(chunk, pos, globalX + 1, globalY + 1, globalZ + 1);
                                 opaqueBitmask |= bnxnynz != null && bnxnynz.isOpaque ? 64 : 0;
                                 opaqueBitmask |= bnxny0z != null && bnxny0z.isOpaque ? 128 : 0;
                                 opaqueBitmask |= bnxnypz != null && bnxnypz.isOpaque ? 256 : 0;
@@ -232,7 +175,7 @@ public class LoneThread {
         this.runnable.runners.addLast(runnable);
     }
 
-    public void meshChunk(Map<Vec3i, Structure> structureMap, Vec3i pos, Structure structure, AtomicReference<Array<MeshData>> dataAtomicReference) {
+    public void meshChunk(StructureWorld world, Vec3i pos, Structure structure, AtomicReference<Array<MeshData>> dataAtomicReference) {
         if (!this.started) {
             this.pauseableThread.start();
             this.started = true;
@@ -244,7 +187,7 @@ public class LoneThread {
             try {
 //                Array<MeshData> array = new Array<>();
 //                array.add(meshFromStructure(structure));
-                Array<MeshData> array = getMeshData(structureMap, pos, structure);
+                Array<MeshData> array = getMeshData(world, pos, structure);
                 dataAtomicReference.set(array);
             } catch (Exception ignore) {
                 ignore.printStackTrace();

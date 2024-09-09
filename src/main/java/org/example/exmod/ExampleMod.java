@@ -1,5 +1,6 @@
 package org.example.exmod;
 
+import com.badlogic.gdx.physics.bullet.Bullet;
 import com.github.puzzle.core.PuzzleRegistries;
 import com.github.puzzle.core.localization.ILanguageFile;
 import com.github.puzzle.core.localization.LanguageManager;
@@ -11,9 +12,11 @@ import com.github.puzzle.game.items.IModItem;
 import com.github.puzzle.loader.entrypoint.interfaces.ModInitializer;
 import finalforeach.cosmicreach.entities.EntityCreator;
 import org.example.exmod.commands.Commands;
+import org.example.exmod.entity.BasicPhysicsEntity;
 import org.example.exmod.entity.WorldCube;
 import org.example.exmod.items.MoonScepter;
 import org.example.exmod.mesh.LoneThread;
+import org.example.exmod.util.NativeLibraryLoader;
 import org.example.exmod.worldgen.SuperFlat;
 import org.greenrobot.eventbus.Subscribe;
 
@@ -29,8 +32,14 @@ public class ExampleMod implements ModInitializer {
         Commands.register();
 
         EntityCreator.registerEntityCreator(Constants.MOD_ID + ":entity", () -> new WorldCube());
+        EntityCreator.registerEntityCreator("base:test", BasicPhysicsEntity::new);
 
         IModItem.registerItem(new MoonScepter());
+
+        boolean success = NativeLibraryLoader.loadLibbulletjme("Debug", "Sp");
+        if (!success) {
+            throw new RuntimeException("Failed to load native library. Please contact nab138, he may need to add support for your platform.");
+        }
     }
 
     @Subscribe

@@ -6,8 +6,6 @@ plugins {
 
 puzzle_loader {
     accessManipulatorPath = file("src/main/resources/example_mod.manipulator")
-//    for = file("src/main/resources/example_mod.manipulator")
-    forgeAccessTransformerPath = file("src/main/resources/funni_blocks.cfg")
 }
 
 repositories {
@@ -16,6 +14,8 @@ repositories {
 
 dependencies {
 //    implementation(fileTree("./lib"))
+    bundle("com.github.stephengold:Libbulletjme:21.2.1")
+    bundle("commons-io:commons-io:2.16.1")
     implementation(files("./lib/PuzzleLoader-69.69.69-bundle.jar"))
 }
 

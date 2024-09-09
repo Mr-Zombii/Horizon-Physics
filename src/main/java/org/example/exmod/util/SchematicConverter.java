@@ -5,17 +5,15 @@ import com.github.puzzle.game.worldgen.schematics.Schematic;
 import com.github.puzzle.util.Vec3i;
 import finalforeach.cosmicreach.blocks.BlockState;
 import org.example.exmod.Constants;
-import org.example.exmod.structures.Structure;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.example.exmod.world.Structure;
+import org.example.exmod.world.StructureWorld;
 
 import static org.example.exmod.items.MoonScepter.cubize;
 
 public class SchematicConverter {
 
-    public static Map<Vec3i, Structure> structureMapFromSchematic(Schematic schematic) {
-        Map<Vec3i, Structure> structureMap = new HashMap<>();
+    public static StructureWorld structureMapFromSchematic(Schematic schematic) {
+        StructureWorld world = new StructureWorld();
 
         Structure structure = new Structure((short) 0, new Identifier(Constants.MOD_ID, "0"));
 
@@ -50,7 +48,7 @@ public class SchematicConverter {
 
                     if (lx == 15 && ly == 15 && lz == 15) {
 //                    if (lastChunkCoord != currentChunkCoord) {
-                        structureMap.put(new Vec3i(cx, cy ,cz), structure);
+                        world.putChunkAt(new Vec3i(cx, cy ,cz), structure);
                         structure = new Structure((short) 0, new Identifier(Constants.MOD_ID, "1"));
                         lastChunkCoord = currentChunkCoord;
                     } else {
@@ -63,7 +61,7 @@ public class SchematicConverter {
             }
         }
 
-        return structureMap;
+        return world;
     }
 
 }

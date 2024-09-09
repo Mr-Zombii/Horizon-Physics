@@ -1,40 +1,44 @@
 package org.example.exmod.entity;
 
 import com.badlogic.gdx.graphics.Camera;
-import com.badlogic.gdx.math.Matrix3;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.OrientedBoundingBox;
 import com.github.puzzle.core.Identifier;
 import com.github.puzzle.util.Vec3i;
+import com.jme3.bullet.objects.PhysicsRigidBody;
 import finalforeach.cosmicreach.Threads;
 import finalforeach.cosmicreach.TickRunner;
 import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.entities.Entity;
+import finalforeach.cosmicreach.io.CRBinDeserializer;
+import finalforeach.cosmicreach.io.CRBinSerializer;
 import finalforeach.cosmicreach.world.Zone;
 import finalforeach.cosmicreach.worldgen.noise.SimplexNoise;
 import org.example.exmod.Constants;
 import org.example.exmod.boundingBox.OrientedBoundingBoxGetter;
 import org.example.exmod.mesh.MutliBlockMesh;
-import org.example.exmod.structures.Structure;
+import org.example.exmod.world.Structure;
+import org.example.exmod.world.StructureWorld;
 import org.example.exmod.util.MatrixUtil;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.UUID;
+import java.util.function.Supplier;
 
 // /summon funni-blocks:entity
 
 public class WorldCube extends Entity {
 
-    public Map<Vec3i, Structure> chunks;
+    public StructureWorld world;
+    public PhysicsRigidBody rigidBody;
 
     static SimplexNoise noise = new SimplexNoise(345324532);
 
-    public Vector3 center = new Vector3();
     public Vector3 rotation = new Vector3(0, 0, 0);
     public Matrix4 transform = new Matrix4();
+
+    public UUID uuid;
 
     public void generateChunk(Structure structure, Vec3i vec3i) {
         BlockState air = BlockState.getInstance("base:air[default]");
@@ -68,12 +72,14 @@ public class WorldCube extends Entity {
         }
     }
 
-    public BoundingBox rBoundingBox = new BoundingBox();
     public OrientedBoundingBox oBoundingBox = new OrientedBoundingBox();
 
-    public WorldCube(Map<Vec3i, Structure> structureMap) {
+    public WorldCube(StructureWorld world) {
         super(new Identifier(Constants.MOD_ID, "entity").toString());
-        chunks = structureMap;
+        this.world = world;
+        uuid = UUID.randomUUID();
+        world.rebuildCollisionShape();
+        rigidBody = new PhysicsRigidBody(world.CCS);
 
         Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(this));
         hasGravity = false;
@@ -82,7 +88,11 @@ public class WorldCube extends Entity {
 
     public WorldCube() {
         super(new Identifier(Constants.MOD_ID, "entity").toString());
-        chunks = new HashMap<>();
+
+        if (uuid == null)
+            uuid = UUID.randomUUID();
+
+        world = new StructureWorld();
         for (int x = -2; x < 2; x++) {
             for (int y = 0; y < 7; y++) {
                 for (int z = -2; z < 2; z++) {
@@ -93,7 +103,7 @@ public class WorldCube extends Entity {
                             new Identifier("base", "test")
                     );
                     generateChunk(structure, vec3i);
-                    chunks.put(vec3i, structure);
+                    world.putChunkAt(vec3i, structure);
                 }
             }
         }
@@ -119,39 +129,57 @@ public class WorldCube extends Entity {
 
     @Override
     public void update(Zone zone, double deltaTime) {
-        center = new Vector3(position.x != 0 ? position.x / 2 : 0, position.y != 0 ? position.y / 2 : 0, position.z != 0 ? position.z / 2 : 0);
-
         MatrixUtil.rotateAroundOrigin2(oBoundingBox, transform, position, rotation);
 
-        oBoundingBox.setBounds(rBoundingBox);
+        oBoundingBox.setBounds(world.AABB);
         oBoundingBox.setTransform(transform);
 
         if (!((OrientedBoundingBoxGetter)localBoundingBox).hasInnerBounds()) {
-            setBounds();
             ((OrientedBoundingBoxGetter)localBoundingBox).setInnerBounds(oBoundingBox);
         }
 
         getBoundingBox(globalBoundingBox);
-        rotation.x += 1f;
+//        rotation.x += 1f;
+//        rotation.y += 1f;
+//        rotation.z += 1f;
         super.updateEntityChunk(zone);
     }
 
-    public void setBounds() {
-        int max_x = 0, max_y = 0, max_z = 0;
-        int min_x = 0, min_y = 0, min_z = 0;
-
-        if (chunks == null) { return; }
-        for (Vec3i pos : chunks.keySet()) {
-            max_x = (16 * (pos.x() + 1)) > max_x ? (16 * (pos.x() + 1)) : max_x;
-            max_y = (16 * (pos.y() + 1)) > max_y ? (16 * (pos.y() + 1)) : max_y;
-            max_z = (16 * (pos.z() + 1)) > max_z ? (16 * (pos.z() + 1)) : max_z;
-
-            min_x = (16 * pos.x()) < min_x ? (16 * pos.x()) : min_x;
-            min_y = (16 * pos.y()) < min_y ? (16 * pos.y()) : min_y;
-            min_z = (16 * pos.z()) < min_z ? (16 * pos.z()) : min_z;
+    <T> T readOrDefault(Supplier<T> read, T _default) {
+        try {
+            return read.get();
+        } catch (Exception ignore) {
+            return _default;
         }
-        rBoundingBox.max.set(new Vector3(max_x, max_y, max_z));
-        rBoundingBox.min.set(new Vector3(min_x, min_y, min_z));
+    }
+
+    @Override
+    public void read(CRBinDeserializer deserial) {
+        super.read(deserial);
+
+        uuid = readOrDefault(() -> {
+            String uid = deserial.readString("uuid");
+            return UUID.fromString(uid);
+        }, UUID.randomUUID());
+
+        rotation = readOrDefault(() -> {
+            float yaw = deserial.readFloat("yaw", rotation.x);
+            float pitch = deserial.readFloat("pitch", rotation.y);
+            float roll = deserial.readFloat("roll", rotation.z);
+
+            return new Vector3(yaw, pitch, roll);
+        }, new Vector3(0, 0, 0));
+    }
+
+    @Override
+    public void write(CRBinSerializer serial) {
+        super.write(serial);
+
+        serial.writeString("uuid", uuid == null ? UUID.randomUUID().toString() : uuid.toString());
+
+        serial.writeFloat("yaw", rotation.x);
+        serial.writeFloat("pitch", rotation.y);
+        serial.writeFloat("roll", rotation.z);
     }
 
     @Override
