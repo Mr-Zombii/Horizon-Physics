@@ -15,9 +15,11 @@ public interface IPhysicEntity {
     @NonNull PhysicsBody getBody();
     @NonNull Vector3 getEularRotation();
     @NonNull UUID getUUID();
+    float getMass();
 
     void setEularRotation(Vector3 rot);
     void setUUID(UUID uuid);
+    void setMass(float mass);
 
     static <T> T readOrDefault(Supplier<T> read, T _default) {
         try {
@@ -34,12 +36,16 @@ public interface IPhysicEntity {
         }, UUID.randomUUID()));
 
         entity.setEularRotation(readOrDefault(() -> {
-            float yaw = deserial.readFloat("yaw", entity.getEularRotation().x);
-            float pitch = deserial.readFloat("pitch", entity.getEularRotation().y);
-            float roll = deserial.readFloat("roll", entity.getEularRotation().z);
+            float yaw = deserial.readFloat("yaw", 0);
+            float pitch = deserial.readFloat("pitch", 0);
+            float roll = deserial.readFloat("roll", 0);
 
             return new Vector3(yaw, pitch, roll);
         }, new Vector3(0, 0, 0)));
+
+        entity.setMass(readOrDefault(() -> {
+            return deserial.readFloat("mass", 0.25f);
+        }, 0.25f));
     }
 
     static <T extends Entity & IPhysicEntity> void write(T entity, CRBinSerializer serial) {
@@ -48,6 +54,8 @@ public interface IPhysicEntity {
         serial.writeFloat("yaw", entity.getEularRotation().x);
         serial.writeFloat("pitch", entity.getEularRotation().y);
         serial.writeFloat("roll", entity.getEularRotation().z);
+
+        serial.writeFloat("mass", entity.getMass());
     }
 
 }

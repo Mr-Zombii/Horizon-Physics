@@ -13,6 +13,7 @@ import com.llamalad7.mixinextras.lib.apache.commons.tuple.Pair;
 import finalforeach.cosmicreach.blocks.BlockState;
 import org.example.exmod.Constants;
 import org.example.exmod.mesh.BlockPositionFunction;
+import org.example.exmod.util.CollisionMeshUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -149,60 +150,15 @@ public class StructureWorld {
             min_y = Math.min((16 * pos.y()), min_y);
             min_z = Math.min((16 * pos.z()), min_z);
         }
-        AABB.max.set(new Vector3(max_x, max_y, max_z));
+
         AABB.min.set(new Vector3(min_x, min_y, min_z));
+        AABB.max.set(new Vector3(max_x, max_y, max_z));
     }
 
     public void rebuildCollisionShape() {
         forEachChunk((pos, chunk) -> {
-            for (int x = 0; x < 16; x++) {
-                for (int y = 0; y < 16; y++) {
-                    for (int z = 0; z < 16; z++) {
-                        int globalX = (pos.x() * 16) + x;
-                        int globalY = (pos.y() * 16) + y;
-                        int globalZ = (pos.z() * 16) + z;
-
-                        BlockState state = chunk.getBlockState(x, y, z);
-                        if (!isCollideableState(state)) continue;
-                        CollisionShape blockCollisionShape = shapeFromBlockState(state);
-                        CCS.addChildShape(blockCollisionShape, new Vector3f(globalX, globalY, globalZ));
-                    }
-                }
-            }
+            CollisionMeshUtil.createPhysicsMesh(pos, chunk);
         });
-    }
-
-    CollisionShape shapeFromBlockState(BlockState state){
-        CompoundCollisionShape collisionShape = new CompoundCollisionShape();
-
-        Array<BoundingBox> boundingBoxes = new Array<>();
-        state.getAllBoundingBoxes(boundingBoxes, 0, 0, 0);
-
-        if (boundingBoxes.size == 1) return shapeFromAABB(boundingBoxes.get(0));
-        while (!boundingBoxes.isEmpty()) {
-            BoundingBox box = boundingBoxes.pop();
-
-            collisionShape.addChildShape(shapeFromAABB(box), new Vector3f(box.min.x, box.min.y, box.min.z));
-        }
-
-        return collisionShape;
-    }
-
-    BoxCollisionShape shapeFromAABB(BoundingBox bb) {
-        Vector3 c000 = bb.getCorner000(new Vector3());
-        Vector3 c001 = bb.getCorner001(new Vector3());
-        Vector3 c010 = bb.getCorner010(new Vector3());
-        Vector3 c100 = bb.getCorner100(new Vector3());
-
-        float extentX = c001.sub(c000).x;
-        float extentY = c010.sub(c000).y;
-        float extentZ = c100.sub(c000).z;
-
-        return new BoxCollisionShape(extentX, extentY, extentZ);
-    }
-
-    boolean isCollideableState(BlockState state) {
-        return !(state == null || state.walkThrough);
     }
 
 }

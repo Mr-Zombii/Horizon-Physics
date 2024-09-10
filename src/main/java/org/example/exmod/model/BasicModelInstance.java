@@ -52,9 +52,9 @@ public class BasicModelInstance implements IEntityModelInstance {
     @Override
     public void render(Entity entity, Camera camera, Matrix4 matrix4) {
         GL20.glDepthFunc(GL11.GL_ALWAYS);
-        batch.begin(camera);
-        batch.render(instance);
-        batch.end();
+//        batch.begin(camera);
+//        batch.render(instance);
+//        batch.end();
         GL20.glDepthFunc(GL20.GL_LESS);
     }
 

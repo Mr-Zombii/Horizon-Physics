@@ -83,6 +83,6 @@ public class SuperFlat extends ZoneGenerator {
 
     @Override
     public int getDefaultRespawnYLevel() {
-        return Integer.MIN_VALUE;
+        return -16;
     }
 }

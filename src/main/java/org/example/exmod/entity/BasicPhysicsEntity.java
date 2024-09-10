@@ -1,84 +1,191 @@
 package org.example.exmod.entity;
 
 import com.badlogic.gdx.graphics.Camera;
-import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.g3d.Model;
-import com.badlogic.gdx.graphics.g3d.loader.ObjLoader;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
+import com.badlogic.gdx.math.collision.OrientedBoundingBox;
+import com.github.puzzle.core.Identifier;
 import com.github.puzzle.core.resources.PuzzleGameAssetLoader;
-import com.github.puzzle.game.engine.items.ItemThingModel;
+import com.github.puzzle.game.util.Reflection;
+import com.github.puzzle.util.Vec3i;
 import com.jme3.bullet.collision.shapes.BoxCollisionShape;
 import com.jme3.bullet.objects.PhysicsBody;
 import com.jme3.bullet.objects.PhysicsRigidBody;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import finalforeach.cosmicreach.Threads;
+import finalforeach.cosmicreach.TickRunner;
+import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.entities.Entity;
-import finalforeach.cosmicreach.gamestates.InGame;
+import finalforeach.cosmicreach.gamestates.GameState;
+import finalforeach.cosmicreach.io.CRBinDeserializer;
+import finalforeach.cosmicreach.io.CRBinSerializer;
 import finalforeach.cosmicreach.world.Zone;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.example.exmod.model.BasicModelInstance;
-import org.example.exmod.world.PhysicsWorld;
+import org.example.exmod.boundingBox.OrientedBoundingBoxGetter;
+import org.example.exmod.mesh.MutliBlockMesh;
+import org.example.exmod.util.MatrixUtil;
+import org.example.exmod.world.Structure;
+import org.example.exmod.world.StructureWorld;
+import org.example.exmod.world.physics.PhysicsWorld;
 
 import java.util.UUID;
 
 public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
 
-    PhysicsRigidBody body;
+    public PhysicsRigidBody body;
 
-    Vector3 rotation;
+    public Vector3 rotation;
     UUID uuid;
-    Model model;
+    float mass = 5;
 
-    Quaternion rot = new Quaternion();
+    public StructureWorld world;
+
+    public Matrix4 transform = new Matrix4();
 
     public BasicPhysicsEntity() {
         super("base:test");
 
-        if (body == null) body = new PhysicsRigidBody(new BoxCollisionShape(0.5f, 0.5f, 0.5f));
         if (rotation == null) rotation = new Vector3(0, 0, 0);
         if (uuid == null) uuid = UUID.randomUUID();
 
-        Threads.runOnMainThread(() -> {
-            model = PuzzleGameAssetLoader.LOADER.loadSync("funni-blocks:rocket_ship/10475_Rocket_Ship_v1_l3.obj", Model.class);
-//            modelInstance = new ItemEntityModel(new ItemThingModel((ItemThing) ItemThing.allItems.get("base:pickaxe_stone")).wrap());
-            modelInstance = new BasicModelInstance(model);
-        });
+        world = new StructureWorld();
+        Structure structure00 = new Structure((short) 0, new Identifier("e", "E"));
+        Structure structure01 = new Structure((short) 0, new Identifier("e", "E"));
+        Structure structure10 = new Structure((short) 0, new Identifier("e", "E"));
+        Structure structure11 = new Structure((short) 0, new Identifier("e", "E"));
 
-        if (position != null)
-            body.setPhysicsLocation(new Vector3f(InGame.getLocalPlayer().getPosition().x, InGame.getLocalPlayer().getPosition().y, InGame.getLocalPlayer().getPosition().z));
-        body.setFriction(1f);
-        body.setMass(0);
-        PhysicsWorld.addEntity(this);
+        BlockState stone = BlockState.getInstance("base:stone_basalt[default]");
+        BlockState light = BlockState.getInstance("base:light[power=on,lightRed=15,lightGreen=0,lightBlue=0]");
+        for (int x = 0; x < 8; x++) {
+            for (int z = 0; z < 8; z++) {
+                structure00.setBlockState(stone, x, 0, z);
+                structure01.setBlockState(stone, x + 8, 0, z);
+                structure10.setBlockState(stone, x, 0, z + 8);
+                structure11.setBlockState(stone, x + 8, 0, z + 8);
+            }
+        }
+        structure00.setBlockState(light, 0, 1, 0);
+        structure01.setBlockState(light, 15, 1, 0);
+        structure10.setBlockState(light, 0, 1, 15);
+        structure11.setBlockState(light, 15, 1, 15);
+        world.putChunkAt(new Vec3i(0, 0, 0), structure00);
+        world.putChunkAt(new Vec3i(-1, 0, 0), structure01);
+        world.putChunkAt(new Vec3i(0, 0, -1), structure10);
+        world.putChunkAt(new Vec3i(-1, 0, -1), structure11);
+        world.rebuildCollisionShape();
+
+        body = new PhysicsRigidBody(world.CCS);
+        body.setPhysicsLocation(new Vector3f(position.x, position.y, position.z));
+        body.setMass(mass);
+
+        Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(world));
+
         hasGravity = false;
+        transform.idt();
+    }
+
+    public OrientedBoundingBox oBoundingBox = new OrientedBoundingBox();
+
+    boolean hasInit = false;
+
+    @Override
+    protected void onDeath(Zone zone) {
+        PhysicsWorld.removeEntity(this);
+        super.onDeath(zone);
+    }
+
+    @Override
+    public void hit(float amount) {
+        body.activate(true);
+        PerspectiveCamera cam = Reflection.getFieldContents(GameState.IN_GAME, "rawWorldCamera");
+        body.setLinearVelocity(new Vector3f(cam.direction.cpy().scl(12).x, cam.direction.cpy().scl(12).y, cam.direction.cpy().scl(12).z));
     }
 
     @Override
     public void update(Zone zone, double deltaTime) {
-//        body.applyForce(new Vector3f(0, 0.5f, 0), new Vector3f());
-        rot = body.getPhysicsRotation(null);
-        Vector3f vector3f = body.getPhysicsLocation(null);
-        position = new Vector3(vector3f.x, vector3f.y, vector3f.z);
+        PhysicsWorld.alertChunk(zone, zone.getChunkAtPosition(position));
+        MatrixUtil.rotateAroundOrigin2(oBoundingBox, transform, position, rotation);
+
+        oBoundingBox.setBounds(world.AABB);
+        oBoundingBox.setTransform(transform);
+
+        if (!hasInit) {
+            body.setPhysicsLocation(new Vector3f(position.x, position.y, position.z));
+            body.setMass(5);
+            PhysicsWorld.alertChunk(zone, zone.getChunkAtPosition(position));
+            hasInit = true;
+
+            PhysicsWorld.addEntity(this);
+            body.activate(true);
+        } else {
+            Vector3f vector3f = body.getPhysicsLocation(new Vector3f());
+            position.set(vector3f.x, vector3f.y, vector3f.z);
+            Quaternion quaternion = body.getPhysicsRotation(new Quaternion());
+            rotation = new Vector3(quaternion.getX(), quaternion.getY(), quaternion.getZ());
+//            System.out.println(vector3f);
+        }
+
+        if (!((OrientedBoundingBoxGetter)localBoundingBox).hasInnerBounds()) {
+            ((OrientedBoundingBoxGetter)localBoundingBox).setInnerBounds(oBoundingBox);
+        }
 
         getBoundingBox(globalBoundingBox);
+//        rotation.x += 1;
         super.updateEntityChunk(zone);
     }
 
     @Override
-    public void render(Camera worldCamera) {
-        if (this.modelInstance == null) return;
+    public void getBoundingBox(BoundingBox boundingBox) {
+        ((OrientedBoundingBoxGetter) boundingBox).setInnerBounds(oBoundingBox);
+        boundingBox.update();
+    }
 
-        tmpRenderPos.set(this.position);
+    @Override
+    public void read(CRBinDeserializer deserial) {
+        super.read(deserial);
+
+        uuid = IPhysicEntity.readOrDefault(() -> {
+            String uid = deserial.readString("uuid");
+            return UUID.fromString(uid);
+        }, UUID.randomUUID());
+
+        rotation = IPhysicEntity.readOrDefault(() -> {
+            float yaw = deserial.readFloat("yaw", rotation.x);
+            float pitch = deserial.readFloat("pitch", rotation.y);
+            float roll = deserial.readFloat("roll", rotation.z);
+
+            return new Vector3(0, 0, 0);
+        }, new Vector3(0, 0, 0));
+
+        body.setPhysicsLocation(new Vector3f(position.x, position.y, position.z));
+    }
+
+    @Override
+    public void write(CRBinSerializer serial) {
+        super.write(serial);
+
+        serial.writeString("uuid", uuid == null ? UUID.randomUUID().toString() : uuid.toString());
+
+        serial.writeFloat("yaw", rotation.x);
+        serial.writeFloat("pitch", rotation.y);
+        serial.writeFloat("roll", rotation.z);
+    }
+
+    @Override
+    public void render(Camera worldCamera) {
+        tmpRenderPos.set(this.lastRenderPosition);
+        TickRunner.INSTANCE.partTickLerp(tmpRenderPos, this.position);
         this.lastRenderPosition.set(tmpRenderPos);
         if (worldCamera.frustum.boundsInFrustum(this.globalBoundingBox)) {
             tmpModelMatrix.idt();
-            tmpModelMatrix.translate(tmpRenderPos);
-            tmpModelMatrix.rotate(new com.badlogic.gdx.math.Quaternion(rot.getX(), rot.getY(), rot.getZ(), rot.getW()));
-
-//            if (tinyTint.r == 0 && tinyTint.g == 0 && tinyTint.b == 0)
-//                ((PhysicsModelInstance) modelInstance).tintSet(tinyTint);
-//            else
-            this.modelInstance.render(this, worldCamera, tmpModelMatrix);
+            MatrixUtil.rotateAroundOrigin2(oBoundingBox, tmpModelMatrix, position, rotation);
+            if (modelInstance != null) {
+                modelInstance.render(this, worldCamera, tmpModelMatrix);
+            }
         }
     }
 
@@ -101,6 +208,11 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
     }
 
     @Override
+    public float getMass() {
+        return mass;
+    }
+
+    @Override
     public void setEularRotation(Vector3 rot) {
         this.rotation = rot;
     }
@@ -108,5 +220,10 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
     @Override
     public void setUUID(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    @Override
+    public void setMass(float mass) {
+
     }
 }

@@ -16,7 +16,7 @@ dependencies {
 //    implementation(fileTree("./lib"))
     bundle("com.github.stephengold:Libbulletjme:21.2.1")
     bundle("commons-io:commons-io:2.16.1")
-    implementation(files("./lib/PuzzleLoader-69.69.69-bundle.jar"))
+//    implementation(files("./lib/PuzzleLoader-69.69.69-bundle.jar"))
 }
 
 processResources {

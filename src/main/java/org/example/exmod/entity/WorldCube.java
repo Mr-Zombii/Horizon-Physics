@@ -81,7 +81,7 @@ public class WorldCube extends Entity {
         world.rebuildCollisionShape();
         rigidBody = new PhysicsRigidBody(world.CCS);
 
-        Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(this));
+        Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(world));
         hasGravity = false;
         transform.idt();
     }
@@ -108,9 +108,9 @@ public class WorldCube extends Entity {
             }
         }
 
-        Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(this));
+        Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(world));
 
-        hasGravity = true;
+        hasGravity = false;
     }
 
     @Override
@@ -139,9 +139,9 @@ public class WorldCube extends Entity {
         }
 
         getBoundingBox(globalBoundingBox);
-//        rotation.x += 1f;
-//        rotation.y += 1f;
-//        rotation.z += 1f;
+        rotation.x += 1f;
+        rotation.y += 1f;
+        rotation.z += 1f;
         super.updateEntityChunk(zone);
     }
 

@@ -22,7 +22,7 @@ import finalforeach.cosmicreach.rendering.shaders.GameShader;
 import finalforeach.cosmicreach.world.Sky;
 import org.example.exmod.ExampleMod;
 import org.example.exmod.entity.WorldCube;
-import org.example.exmod.util.MatrixUtil;
+import org.example.exmod.world.StructureWorld;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,16 +32,16 @@ public class MutliBlockMesh implements IEntityModelInstance {
 
     Map<Vec3i, Pair<GameMesh, GameShader>[]> meshPairs = new HashMap<>();
     GameShader shader;
-    WorldCube worldCube;
+    StructureWorld world;
 
     Map<Vec3i, AtomicReference<Array<MeshData>>> references = new HashMap<>();
 
-    public MutliBlockMesh(WorldCube entity69) {
-        this.worldCube = entity69;
+    public MutliBlockMesh(StructureWorld world) {
+        this.world = world;
 
-        entity69.world.forEachChunk((pos, chunk) -> {
+        world.forEachChunk((pos, chunk) -> {
             AtomicReference<Array<MeshData>> reference = new AtomicReference<>();
-            ExampleMod.thread.meshChunk(entity69.world, pos, chunk, reference);
+            ExampleMod.thread.meshChunk(world, pos, chunk, reference);
             references.put(pos, reference);
         });
 
@@ -67,10 +67,9 @@ public class MutliBlockMesh implements IEntityModelInstance {
 
     @Override
     public void render(Entity _entity, Camera camera, Matrix4 tmp) {
-        if (_entity instanceof WorldCube entity) {
             if (this.meshPairs != null) {
 
-                entity.world.forEachChunk(pos -> {
+                world.forEachChunk(pos -> {
                     Pair<GameMesh, GameShader>[] meshes = meshPairs.get(pos);
                     if (meshes != null && meshes.length != 0) {
 
@@ -157,7 +156,6 @@ public class MutliBlockMesh implements IEntityModelInstance {
                 });
 
 //                entity.rotation.z += 0.5f;
-            }
         }
     }
 
