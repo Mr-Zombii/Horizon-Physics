@@ -1,9 +1,12 @@
 package org.example.exmod.world;
 
+import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Queue;
 import com.github.puzzle.core.Identifier;
 import com.github.puzzle.util.Vec3i;
 import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.constants.Direction;
+import org.example.exmod.world.lighting.BlockLightPropagator;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -16,12 +19,19 @@ public class Structure {
 
     final short version;
     final Identifier id;
+    final Vector3 chunkPos;
+    final Vector3 blockPos;
 
     final List<String> palette;
+    public StructureWorld parent;
 
     // int blocks
     // blocksIndex, chunk x y z, bp x y z
     short[] positions;
+    public short[] blockLights;
+
+    public boolean needsRemeshing = true;
+    public boolean needsToRebuildMesh = true;
 
     public Structure(
             short version,
@@ -33,6 +43,10 @@ public class Structure {
         this.id = id;
 
         this.positions = new short[16 * 16 * 16];
+        this.blockLights = new short[16 * 16 * 16];
+
+        chunkPos = new Vector3(0, 0, 0);
+        blockPos = new Vector3(0, 0, 0);
     }
 
     Structure(short version, String id, List<String> blocks, short[] positions) {
@@ -40,6 +54,89 @@ public class Structure {
         this.palette = blocks;
         this.id = Identifier.fromString(id);
         this.positions = positions;
+
+        chunkPos = new Vector3(0, 0, 0);
+        blockPos = new Vector3(0, 0, 0);
+    }
+
+    public void setChunkPos(Vec3i pos) {
+        chunkPos.set(pos.x(), pos.y(), pos.z());
+        blockPos.set(pos.x() * 16, pos.y() * 16, pos.z() * 16);
+    }
+
+    public void setParentWorld(StructureWorld world) {
+        this.parent = world;
+    }
+
+    public Vec3i getChunkPos() {
+        return new Vec3i((int) chunkPos.x, (int) chunkPos.y, (int) chunkPos.z);
+    }
+
+    public Vec3i getBlockPos() {
+        return new Vec3i((int) blockPos.x, (int) blockPos.y, (int) blockPos.z);
+    }
+
+    public void flagTouchingChunksForRemeshing(StructureWorld zone, int localX, int localY, int localZ, boolean updateImmediately) {
+        this.flagForRemeshing(updateImmediately);
+        if (localX == 0 || localY == 0 || localZ == 0 || localX == 15 || localY == 15 || localZ == 15) {
+            int dx = localX == 0 ? -1 : (localX == 15 ? 1 : 0);
+            int dy = localY == 0 ? -1 : (localY == 15 ? 1 : 0);
+            int dz = localZ == 0 ? -1 : (localZ == 15 ? 1 : 0);
+            Structure nc;
+            if (dx != 0) {
+                nc = zone.getChunkAtChunkCoords((int) (this.chunkPos.x + dx), (int) this.chunkPos.y, (int) this.chunkPos.z);
+                if (nc != null) {
+                    nc.flagForRemeshing(updateImmediately);
+                }
+            }
+
+            if (dy != 0) {
+                nc = zone.getChunkAtChunkCoords((int) this.chunkPos.x, (int) (this.chunkPos.y + dy), (int) this.chunkPos.z);
+                if (nc != null) {
+                    nc.flagForRemeshing(updateImmediately);
+                }
+            }
+
+            if (dz != 0) {
+                nc = zone.getChunkAtChunkCoords((int) this.chunkPos.x, (int) this.chunkPos.y, (int) (this.chunkPos.z + dz));
+                if (nc != null) {
+                    nc.flagForRemeshing(updateImmediately);
+                }
+            }
+
+            if (dx != 0 && dy != 0) {
+                nc = zone.getChunkAtChunkCoords((int) (this.chunkPos.x + dx), (int) (this.chunkPos.y + dy), (int) this.chunkPos.z);
+                if (nc != null) {
+                    nc.flagForRemeshing(updateImmediately);
+                }
+            }
+
+            if (dx != 0 && dz != 0) {
+                nc = zone.getChunkAtChunkCoords((int) (this.chunkPos.x + dx), (int) this.chunkPos.y, (int) (this.chunkPos.z + dz));
+                if (nc != null) {
+                    nc.flagForRemeshing(updateImmediately);
+                }
+            }
+
+            if (dy != 0 && dz != 0) {
+                nc = zone.getChunkAtChunkCoords((int) this.chunkPos.x, (int) (this.chunkPos.y + dy), (int) (this.chunkPos.z + dz));
+                if (nc != null) {
+                    nc.flagForRemeshing(updateImmediately);
+                }
+            }
+
+            if (dx != 0 && dy != 0 && dz != 0) {
+                nc = zone.getChunkAtChunkCoords((int) (this.chunkPos.x + dx), (int) (this.chunkPos.y + dy), (int) (this.chunkPos.z + dz));
+                if (nc != null) {
+                    nc.flagForRemeshing(updateImmediately);
+                }
+            }
+        }
+
+    }
+
+    private void flagForRemeshing(boolean updateImmediately) {
+        this.needsRemeshing = true;
     }
 
     short addBlock(String blockId) {
@@ -50,15 +147,15 @@ public class Structure {
         return (short) palette.indexOf(blockId);
     }
 
-    static int to1DCoords(int x, int y, int z) {
+    public static int to1DCoords(int x, int y, int z) {
         return (z * 16 * 16) + (y * 16) + x;
     }
 
-    static int to1DCoords(Vec3i vec3i) {
+    public static int to1DCoords(Vec3i vec3i) {
         return (vec3i.z() * 16 * 16) + (vec3i.y() * 16) + vec3i.x();
     }
 
-    static Vec3i to3DCoords(int index) {
+    public static Vec3i to3DCoords(int index) {
         int tmpIndex = index;
 
         int z = tmpIndex / (16 * 16);
@@ -70,6 +167,25 @@ public class Structure {
 
     public void setBlockState(BlockState state, int x, int y, int z) {
         positions[to1DCoords(x, y, z)] = addBlock(state.getSaveKey());
+        if (state.isLightEmitter()) {
+            setBlockLight(
+                    state.lightLevelRed, state.lightLevelGreen, state.lightLevelBlue,
+                    x, y, z
+            );
+        }
+    }
+
+    public void setBlockLight(int r, int g, int b, int x, int y, int z) {
+        short blockLight = (short) ((r << 8) + (g << 4) + b);
+        blockLights[to1DCoords(x, y, z)] = blockLight;
+
+        if (parent != null) {
+            Queue<BlockPos> queue = new Queue<>();
+            queue.addLast(new BlockPos(this, x, y, z));
+
+//            BlockLightPropagator.propagateBlockDarkness(parent, queue);
+//            BlockLightPropagator.propagateBlockLights(parent, queue);
+        }
     }
 
     static Map<String, BlockState> blockStateCache = new HashMap<>();
@@ -118,7 +234,7 @@ public class Structure {
 
     public boolean isCulledByAdjacentChunks(Vec3i pos, StructureWorld zone) {
         for (Direction d : Direction.ALL_DIRECTIONS) {
-            Structure n = zone.getChunkAt(new Vec3i(pos.x() + d.getXOffset(), pos.y() + d.getYOffset(), pos.z() + d.getZOffset()));
+            Structure n = zone.getChunkAtChunkCoords(new Vec3i(pos.x() + d.getXOffset(), pos.y() + d.getYOffset(), pos.z() + d.getZOffset()));
             if (n == null || !n.isEntirelyOpaque()) {
                 return false;
             }
@@ -212,4 +328,7 @@ public class Structure {
         }
     }
 
+    public short getBlockLight(int localX, int localY, int localZ) {
+        return blockLights[to1DCoords(localX, localY, localZ)];
+    }
 }

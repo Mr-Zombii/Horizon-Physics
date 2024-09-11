@@ -31,9 +31,13 @@ public class ExampleMod implements ModInitializer {
         PuzzleRegistries.EVENT_BUS.register(this);
         Commands.register();
 
-        EntityCreator.registerEntityCreator(Constants.MOD_ID + ":entity", () -> new WorldCube());
+        EntityCreator.registerEntityCreator("funni-blocks:entity", () -> new WorldCube());
         EntityCreator.registerEntityCreator("base:test", BasicPhysicsEntity::new);
         EntityCreator.registerEntityCreator("base:test2", BasicShipEntity::new);
+
+        EntityCreator.registerEntityCreator(Constants.MOD_ID + ":rotating_entity", () -> new WorldCube());
+        EntityCreator.registerEntityCreator(Constants.MOD_ID + ":physics_entity", BasicPhysicsEntity::new);
+        EntityCreator.registerEntityCreator(Constants.MOD_ID + ":ship", BasicShipEntity::new);
 
         IModItem.registerItem(new MoonScepter());
 

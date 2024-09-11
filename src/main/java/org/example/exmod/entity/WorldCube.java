@@ -43,7 +43,8 @@ public class WorldCube extends Entity {
     public void generateChunk(Structure structure, Vec3i vec3i) {
         BlockState air = BlockState.getInstance("base:air[default]");
         BlockState stoneBlock = BlockState.getInstance("base:stone_basalt[default]");
-        BlockState waterBlock = BlockState.getInstance("base:water[default]");
+//        BlockState waterBlock = BlockState.getInstance("base:water[default]");
+        BlockState waterBlock = BlockState.getInstance("base:light[power=on,lightRed=15,lightGreen=0,lightBlue=0]");
 
         for(int localX = 0; localX < 16; localX++) {
             int globalX = (vec3i.x() * 16) + localX;
@@ -87,7 +88,7 @@ public class WorldCube extends Entity {
     }
 
     public WorldCube() {
-        super(new Identifier(Constants.MOD_ID, "entity").toString());
+        super(Constants.MOD_ID + ":rotating_entity");
 
         if (uuid == null)
             uuid = UUID.randomUUID();
@@ -102,6 +103,7 @@ public class WorldCube extends Entity {
                             (short) 0,
                             new Identifier("base", "test")
                     );
+                    structure.setParentWorld(world);
                     generateChunk(structure, vec3i);
                     world.putChunkAt(vec3i, structure);
                 }

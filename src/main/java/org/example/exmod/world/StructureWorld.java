@@ -2,15 +2,12 @@ package org.example.exmod.world;
 
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
-import com.badlogic.gdx.utils.Array;
 import com.github.puzzle.core.Identifier;
 import com.github.puzzle.util.Vec3i;
-import com.jme3.bullet.collision.shapes.BoxCollisionShape;
-import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.collision.shapes.CompoundCollisionShape;
-import com.jme3.math.Vector3f;
 import com.llamalad7.mixinextras.lib.apache.commons.tuple.Pair;
 import finalforeach.cosmicreach.blocks.BlockState;
+import finalforeach.cosmicreach.world.Chunk;
 import org.example.exmod.Constants;
 import org.example.exmod.mesh.BlockPositionFunction;
 import org.example.exmod.util.CollisionMeshUtil;
@@ -33,7 +30,15 @@ public class StructureWorld {
 
     private static final Structure emptyStructure = new Structure((short) 0, new Identifier(Constants.MOD_ID, "empty"));
 
-    public Structure getStructureBlock(Vec3i blockPos) {
+    public Structure getChunkAtBlock(int x, int y, int z) {
+        int cx = Math.floorDiv(x, 16);
+        int cy = Math.floorDiv(y, 16);
+        int cz = Math.floorDiv(z, 16);
+
+        return structureMap.get(new Vec3i(cx, cy, cz)) == null ? (nullSideChunks ? null : emptyStructure) : structureMap.get(new Vec3i(cx, cy, cz));
+    }
+
+    public Structure getChunkAtBlock(Vec3i blockPos) {
         int cx = Math.floorDiv(blockPos.x(), 16);
         int cy = Math.floorDiv(blockPos.y(), 16);
         int cz = Math.floorDiv(blockPos.z(), 16);
@@ -53,7 +58,7 @@ public class StructureWorld {
         if (candidateChunk != null && pos.x() == cx && pos.y() == cy && pos.z() == cz) {
             c = candidateChunk;
         } else {
-            c = getStructureBlock(new Vec3i(x, y, z));
+            c = getChunkAtBlock(new Vec3i(x, y, z));
         }
 
         if (c == null) {
@@ -76,7 +81,7 @@ public class StructureWorld {
         } else if (b != null && b.getLeft().x() == cx && b.getLeft().y() == cy && b.getLeft().z() == cz) {
             c = b.getRight();
         } else {
-            c = getStructureBlock(new Vec3i(x, y, z));
+            c = getChunkAtBlock(new Vec3i(x, y, z));
         }
 
         if (c == null) {
@@ -94,7 +99,7 @@ public class StructureWorld {
         int cy = Math.floorDiv(pos.y(), 16);
         int cz = Math.floorDiv(pos.z(), 16);
 
-        Structure c = getChunkAt(new Vec3i(cx, cy, cz));
+        Structure c = getChunkAtChunkCoords(new Vec3i(cx, cy, cz));
         if (c == null) return null;
 
         return c.getBlockState(
@@ -106,14 +111,19 @@ public class StructureWorld {
 
     public Structure putChunkAt(Vec3i pos, Structure structure) {
         if (structure != null) {
+            structure.setChunkPos(pos);
             structureMap.put(pos, structure);
             recalculateBounds();
         }
         return structure;
     }
 
-    public Structure getChunkAt(Vec3i pos) {
+    public Structure getChunkAtChunkCoords(Vec3i pos) {
         return structureMap.get(pos);
+    }
+
+    public Structure getChunkAtChunkCoords(int x, int y, int z) {
+        return structureMap.get(new Vec3i(x, y, z));
     }
 
     public Structure removeChunkAt(Vec3i pos) {
@@ -130,7 +140,7 @@ public class StructureWorld {
 
     public void forEachChunk(BiConsumer<Vec3i, Structure> chunkConsumer) {
         for (Vec3i pos : structureMap.keySet()) {
-            Structure structure = getChunkAt(pos);
+            Structure structure = getChunkAtChunkCoords(pos);
 
             chunkConsumer.accept(pos, structure);
         }
@@ -161,4 +171,24 @@ public class StructureWorld {
         });
     }
 
+    public int getBlockLight(Structure chunk, int x, int y, int z) {
+        int cx = Math.floorDiv(x, 16);
+        int cy = Math.floorDiv(y, 16);
+        int cz = Math.floorDiv(z, 16);
+        Structure c;
+        if (chunk != null && chunk.getChunkPos().x() == cx && chunk.getChunkPos().y() == cy && chunk.getChunkPos().z() == cz) {
+            c = chunk;
+        } else {
+            c = this.getChunkAtBlock(x, y, z);
+        }
+
+        if (c == null) {
+            return 0;
+        } else {
+            x -= 16 * cx;
+            y -= 16 * cy;
+            z -= 16 * cz;
+            return c.getBlockLight(x, y, z);
+        }
+    }
 }

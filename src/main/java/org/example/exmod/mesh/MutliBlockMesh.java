@@ -68,78 +68,89 @@ public class MutliBlockMesh implements IEntityModelInstance {
     @Override
     public void render(Entity _entity, Camera camera, Matrix4 tmp) {
             if (this.meshPairs != null) {
+                world.forEachChunk((pos, chunk) -> {
+                    if (!chunk.needsRemeshing) {
+                        if (chunk.needsToRebuildMesh) {
+                            Array<MeshData> data = references.get(pos).get();
 
-                world.forEachChunk(pos -> {
-                    Pair<GameMesh, GameShader>[] meshes = meshPairs.get(pos);
-                    if (meshes != null && meshes.length != 0) {
+                            if (data != null && !data.isEmpty()) {
+                                MeshData[] meshData = sortData(data);
+                                Pair<GameMesh, GameShader>[] finalizedMeshes = finalizeMeshes(meshData);
+                                meshPairs.put(pos, finalizedMeshes);
+                            }
+                            chunk.needsToRebuildMesh = false;
+                            return;
+                        }
+                        Pair<GameMesh, GameShader>[] meshes = meshPairs.get(pos);
+                        if (meshes != null && meshes.length != 0) {
 
 //                        tmp.setFromEulerAngles(entity.rotation.x, entity.rotation.y, entity.rotation.z);
 
-                        if (!BlockModelJson.useIndices) {
-                            SharedQuadIndexData.bind();
-                        }
+                            if (!BlockModelJson.useIndices) {
+                                SharedQuadIndexData.bind();
+                            }
 
-                        Vector3 batchPos = new Vector3(pos.x() * 16, pos.y() * 16, pos.z() * 16);
-                        try {
-                            Pair<GameMesh, GameShader> defaultMesh = meshes[2];
-                            this.shader = defaultMesh.getRight();
+                            Vector3 batchPos = new Vector3(pos.x() * 16, pos.y() * 16, pos.z() * 16);
+                            try {
+                                Pair<GameMesh, GameShader> defaultMesh = meshes[2];
+                                this.shader = defaultMesh.getRight();
 
-                            this.shader.bind(camera);
-                            this.shader.bindOptionalMatrix4("u_projViewTrans", camera.combined);
-                            this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
-                            this.shader.bindOptionalMatrix4("u_modelMat", tmp);
-                            this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
+                                this.shader.bind(camera);
+                                this.shader.bindOptionalMatrix4("u_projViewTrans", camera.combined);
+                                this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
+                                this.shader.bindOptionalMatrix4("u_modelMat", tmp);
+                                this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
 
-                            defaultMesh.getLeft().bind(this.shader.shader);
-                            defaultMesh.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
-                            defaultMesh.getLeft().unbind(this.shader.shader);
+                                defaultMesh.getLeft().bind(this.shader.shader);
+                                defaultMesh.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
+                                defaultMesh.getLeft().unbind(this.shader.shader);
 
-                            this.shader.unbind();
-                        } catch (Exception ignore) {}
+                                this.shader.unbind();
+                            } catch (Exception ignore) {}
 
-                        try {
-                            Pair<GameMesh, GameShader> partialTransparent = meshes[1];
+                            try {
+                                Pair<GameMesh, GameShader> partialTransparent = meshes[1];
 
-                            this.shader = partialTransparent.getRight();
-                            this.shader.bind(camera);
-                            this.shader.bindOptionalMatrix4("u_projViewTrans", camera.combined);
-                            this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
-                            this.shader.bindOptionalMatrix4("u_modelMat", tmp);
-                            this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
+                                this.shader = partialTransparent.getRight();
+                                this.shader.bind(camera);
+                                this.shader.bindOptionalMatrix4("u_projViewTrans", camera.combined);
+                                this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
+                                this.shader.bindOptionalMatrix4("u_modelMat", tmp);
+                                this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
 
-                            partialTransparent.getLeft().bind(this.shader.shader);
-                            partialTransparent.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
-                            partialTransparent.getLeft().unbind(this.shader.shader);
+                                partialTransparent.getLeft().bind(this.shader.shader);
+                                partialTransparent.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
+                                partialTransparent.getLeft().unbind(this.shader.shader);
 
-                            this.shader.unbind();
-                        } catch (Exception ignore) {}
+                                this.shader.unbind();
+                            } catch (Exception ignore) {}
 
-                        try {
-                            Pair<GameMesh, GameShader> fullyTransparent = meshes[0];
-                            this.shader = fullyTransparent.getRight();
-                            this.shader.bind(camera);
-                            this.shader.bindOptionalMatrix4("u_projViewTrans", camera.combined);
-                            this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
-                            this.shader.bindOptionalMatrix4("u_modelMat", tmp);
-                            this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
-                            fullyTransparent.getLeft().bind(this.shader.shader);
-                            fullyTransparent.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
-                            fullyTransparent.getLeft().unbind(this.shader.shader);
+                            try {
+                                Pair<GameMesh, GameShader> fullyTransparent = meshes[0];
+                                this.shader = fullyTransparent.getRight();
+                                this.shader.bind(camera);
+                                this.shader.bindOptionalMatrix4("u_projViewTrans", camera.combined);
+                                this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
+                                this.shader.bindOptionalMatrix4("u_modelMat", tmp);
+                                this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
+                                fullyTransparent.getLeft().bind(this.shader.shader);
+                                fullyTransparent.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
+                                fullyTransparent.getLeft().unbind(this.shader.shader);
 
-                            this.shader.unbind();
-                        } catch (Exception ignore) {}
+                                this.shader.unbind();
+                            } catch (Exception ignore) {}
 
-                        if (!BlockModelJson.useIndices) {
-                            SharedQuadIndexData.unbind();
-                        }
+                            if (!BlockModelJson.useIndices) {
+                                SharedQuadIndexData.unbind();
+                            }
 
-                    } else {
-                        Array<MeshData> data = references.get(pos).get();
+                        } else {
+                            Array<MeshData> data = references.get(pos).get();
 
-                        if (data != null && !data.isEmpty()) {
-                            MeshData[] meshData = sortData(data);
-                            Pair<GameMesh, GameShader>[] finalizedMeshes = finalizeMeshes(meshData);
-                            meshPairs.put(pos, finalizedMeshes);
+                            if (data != null && !data.isEmpty()) {
+                                MeshData[] meshData = sortData(data);
+                                Pair<GameMesh, GameShader>[] finalizedMeshes = finalizeMeshes(meshData);
+                                meshPairs.put(pos, finalizedMeshes);
 //                        if (BlockModelJson.useIndices) {
 //                            meshes.put(pos, data.get(0).toIntIndexedMesh(true));
 //                            shader = data.get(0).shader;
@@ -151,7 +162,10 @@ public class MutliBlockMesh implements IEntityModelInstance {
 //                                SharedQuadIndexData.allowForNumIndices(numIndices, false);
 //                            }
 //                        }
+                            }
                         }
+                    } else {
+                        ExampleMod.thread.meshChunk(world, pos, chunk, references.get(pos));
                     }
                 });
 

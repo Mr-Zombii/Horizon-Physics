@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.logging.Logger;
 
+// Native Library Loader adapted from Nab138's https://github.com/Mr-Zombii/CosmicPhysics/blob/main/src/main/java/me/nabdev/physicsmod/utils/NativeLibraryLoader.java
 public final class NativeLibraryLoader {
     public static final Logger logger = Logger.getLogger(NativeLibraryLoader.class.getName());
 

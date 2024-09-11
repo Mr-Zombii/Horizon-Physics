@@ -15,7 +15,10 @@ import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.rendering.MeshData;
 import finalforeach.cosmicreach.rendering.RenderOrder;
 import finalforeach.cosmicreach.rendering.shaders.GameShader;
+import finalforeach.cosmicreach.savelib.lightdata.blocklight.IBlockLightData;
 import finalforeach.cosmicreach.util.ArrayUtils;
+import finalforeach.cosmicreach.world.Chunk;
+import finalforeach.cosmicreach.world.Zone;
 import org.example.exmod.Constants;
 import org.example.exmod.world.Structure;
 import org.example.exmod.world.StructureWorld;
@@ -46,14 +49,15 @@ public class LoneThread {
                 short[] blockLightLevels = new short[8];
                 int[] skyLightLevels = new int[8];
 
-                Arrays.fill(blockLightLevels, (short) 4095);
+                Arrays.fill(skyLightLevels, (short) 4095);
+//                Arrays.fill(blockLightLevels, (short) 4095);
 
-                Pair<Vec3i, Structure> chunkNegX = world.getChunkAt(new Vec3i(pos.x() - 1, pos.y(), pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x() - 1, pos.y(), pos.z()), world.getChunkAt(new Vec3i(pos.x() - 1, pos.y(), pos.z()))) : null;
-                Pair<Vec3i, Structure> chunkPosX = world.getChunkAt(new Vec3i(pos.x() + 1, pos.y(), pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x() + 1, pos.y(), pos.z()), world.getChunkAt(new Vec3i(pos.x() + 1, pos.y(), pos.z()))) : null;
-                Pair<Vec3i, Structure> chunkNegY = world.getChunkAt(new Vec3i(pos.x(), pos.y() - 1, pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y() - 1, pos.z()), world.getChunkAt(new Vec3i(pos.x(), pos.y() - 1, pos.z()))) : null;
-                Pair<Vec3i, Structure> chunkPosY = world.getChunkAt(new Vec3i(pos.x(), pos.y() + 1, pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y() + 1, pos.z()), world.getChunkAt(new Vec3i(pos.x(), pos.y() + 1, pos.z()))) : null;
-                Pair<Vec3i, Structure> chunkNegZ = world.getChunkAt(new Vec3i(pos.x(), pos.y(), pos.z() - 1)) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y(), pos.z() - 1), world.getChunkAt(new Vec3i(pos.x(), pos.y(), pos.z() - 1))) : null;
-                Pair<Vec3i, Structure> chunkPosZ = world.getChunkAt(new Vec3i(pos.x(), pos.y(), pos.z() + 1)) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y(), pos.z() + 1), world.getChunkAt(new Vec3i(pos.x(), pos.y(), pos.z() + 1))) : null;
+                Pair<Vec3i, Structure> chunkNegX = world.getChunkAtChunkCoords(new Vec3i(pos.x() - 1, pos.y(), pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x() - 1, pos.y(), pos.z()), world.getChunkAtChunkCoords(new Vec3i(pos.x() - 1, pos.y(), pos.z()))) : null;
+                Pair<Vec3i, Structure> chunkPosX = world.getChunkAtChunkCoords(new Vec3i(pos.x() + 1, pos.y(), pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x() + 1, pos.y(), pos.z()), world.getChunkAtChunkCoords(new Vec3i(pos.x() + 1, pos.y(), pos.z()))) : null;
+                Pair<Vec3i, Structure> chunkNegY = world.getChunkAtChunkCoords(new Vec3i(pos.x(), pos.y() - 1, pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y() - 1, pos.z()), world.getChunkAtChunkCoords(new Vec3i(pos.x(), pos.y() - 1, pos.z()))) : null;
+                Pair<Vec3i, Structure> chunkPosY = world.getChunkAtChunkCoords(new Vec3i(pos.x(), pos.y() + 1, pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y() + 1, pos.z()), world.getChunkAtChunkCoords(new Vec3i(pos.x(), pos.y() + 1, pos.z()))) : null;
+                Pair<Vec3i, Structure> chunkNegZ = world.getChunkAtChunkCoords(new Vec3i(pos.x(), pos.y(), pos.z() - 1)) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y(), pos.z() - 1), world.getChunkAtChunkCoords(new Vec3i(pos.x(), pos.y(), pos.z() - 1))) : null;
+                Pair<Vec3i, Structure> chunkPosZ = world.getChunkAtChunkCoords(new Vec3i(pos.x(), pos.y(), pos.z() + 1)) != null ? new ImmutablePair<>(new Vec3i(pos.x(), pos.y(), pos.z() + 1), world.getChunkAtChunkCoords(new Vec3i(pos.x(), pos.y(), pos.z() + 1))) : null;
 
                 for(int idx = 0; idx < 4096; idx++) {
                     int localY = idx / 256;
@@ -147,6 +151,7 @@ public class LoneThread {
                                     meshDatas.add(md);
                                 }
 
+                                calculateBlockLightLevels(chunk, blockLightLevels, true, opaqueBitmask, localX, localY, localZ);
                                 b.addVertices(md, globalX - (pos.x() * 16), globalY - (pos.y() * 16), globalZ - (pos.z() * 16), opaqueBitmask, blockLightLevels, skyLightLevels);
                             }
                         }
@@ -156,6 +161,130 @@ public class LoneThread {
                 return meshDatas;
             }
         }
+    }
+
+    private static short[] calculateBlockLightLevels(Structure chunk, short[] blockLightLevels, boolean hasNeighbouringBlockLightChunks, int opaqueBitmask, int localX, int localY, int localZ) {
+        short lightLevel = 0;
+//        short[] blockLightData = chunk.blockLightData;
+        StructureWorld zone = chunk.parent;
+//        if (blockLightData == null) {
+//            if (!hasNeighbouringBlockLightChunks || localX > 0 && localY > 0 && localZ > 0 && localX < 15 && localY < 15 && localZ < 15) {
+//                return blockLightLevels;
+//            }
+//        } else {
+            lightLevel = chunk.getBlockLight(localX, localY, localZ);
+//        }
+
+        Arrays.fill(blockLightLevels, (short) lightLevel);
+        int globalX = chunk.getBlockPos().x() + localX;
+        int globalY = chunk.getBlockPos().y() + localY;
+        int globalZ = chunk.getBlockPos().z() + localZ;
+        int lightNxNyNz = zone.getBlockLight(chunk, globalX - 1, globalY - 1, globalZ - 1);
+        int lightNxNy0z = zone.getBlockLight(chunk, globalX - 1, globalY - 1, globalZ);
+        int lightNxNyPz = zone.getBlockLight(chunk, globalX - 1, globalY - 1, globalZ + 1);
+        int lightNx0yNz = zone.getBlockLight(chunk, globalX - 1, globalY, globalZ - 1);
+        int lightNx0y0z = zone.getBlockLight(chunk, globalX - 1, globalY, globalZ);
+        int lightNx0yPz = zone.getBlockLight(chunk, globalX - 1, globalY, globalZ + 1);
+        int lightNxPyNz = zone.getBlockLight(chunk, globalX - 1, globalY + 1, globalZ - 1);
+        int lightNxPy0z = zone.getBlockLight(chunk, globalX - 1, globalY + 1, globalZ);
+        int lightNxPyPz = zone.getBlockLight(chunk, globalX - 1, globalY + 1, globalZ + 1);
+        int light0xNyNz = zone.getBlockLight(chunk, globalX, globalY - 1, globalZ - 1);
+        int light0xNy0z = zone.getBlockLight(chunk, globalX, globalY - 1, globalZ);
+        int light0xNyPz = zone.getBlockLight(chunk, globalX, globalY - 1, globalZ + 1);
+        int light0x0yNz = zone.getBlockLight(chunk, globalX, globalY, globalZ - 1);
+        int light0x0yPz = zone.getBlockLight(chunk, globalX, globalY, globalZ + 1);
+        int light0xPyNz = zone.getBlockLight(chunk, globalX, globalY + 1, globalZ - 1);
+        int light0xPy0z = zone.getBlockLight(chunk, globalX, globalY + 1, globalZ);
+        int light0xPyPz = zone.getBlockLight(chunk, globalX, globalY + 1, globalZ + 1);
+        int lightPxNyNz = zone.getBlockLight(chunk, globalX + 1, globalY - 1, globalZ - 1);
+        int lightPxNy0z = zone.getBlockLight(chunk, globalX + 1, globalY - 1, globalZ);
+        int lightPxNyPz = zone.getBlockLight(chunk, globalX + 1, globalY - 1, globalZ + 1);
+        int lightPx0yNz = zone.getBlockLight(chunk, globalX + 1, globalY, globalZ - 1);
+        int lightPx0y0z = zone.getBlockLight(chunk, globalX + 1, globalY, globalZ);
+        int lightPx0yPz = zone.getBlockLight(chunk, globalX + 1, globalY, globalZ + 1);
+        int lightPxPyNz = zone.getBlockLight(chunk, globalX + 1, globalY + 1, globalZ - 1);
+        int lightPxPy0z = zone.getBlockLight(chunk, globalX + 1, globalY + 1, globalZ);
+        int lightPxPyPz = zone.getBlockLight(chunk, globalX + 1, globalY + 1, globalZ + 1);
+        short m = blockLightLevels[0];
+        m = getMaxBlockLight(m, light0xNy0z);
+        m = getMaxBlockLight(m, light0xNyNz);
+        m = getMaxBlockLight(m, lightNxNy0z);
+        m = getMaxBlockLight(m, lightNx0y0z);
+        m = getMaxBlockLight(m, light0x0yNz);
+        m = getMaxBlockLight(m, lightNx0yNz);
+        m = getMaxBlockLight(m, lightNxNyNz);
+        blockLightLevels[0] = m;
+        m = blockLightLevels[1];
+        m = getMaxBlockLight(m, light0xNy0z);
+        m = getMaxBlockLight(m, light0xNyPz);
+        m = getMaxBlockLight(m, lightNxNy0z);
+        m = getMaxBlockLight(m, light0x0yPz);
+        m = getMaxBlockLight(m, lightNx0y0z);
+        m = getMaxBlockLight(m, lightNx0yPz);
+        m = getMaxBlockLight(m, lightNxNyPz);
+        blockLightLevels[1] = m;
+        m = blockLightLevels[2];
+        m = getMaxBlockLight(m, light0xNy0z);
+        m = getMaxBlockLight(m, light0xNyNz);
+        m = getMaxBlockLight(m, lightPxNy0z);
+        m = getMaxBlockLight(m, light0x0yNz);
+        m = getMaxBlockLight(m, lightPx0y0z);
+        m = getMaxBlockLight(m, lightPx0yNz);
+        m = getMaxBlockLight(m, lightPxNyNz);
+        blockLightLevels[2] = m;
+        m = blockLightLevels[3];
+        m = getMaxBlockLight(m, light0xNy0z);
+        m = getMaxBlockLight(m, light0xNyPz);
+        m = getMaxBlockLight(m, lightPxNy0z);
+        m = getMaxBlockLight(m, light0x0yPz);
+        m = getMaxBlockLight(m, lightPx0y0z);
+        m = getMaxBlockLight(m, lightPx0yPz);
+        m = getMaxBlockLight(m, lightPxNyPz);
+        blockLightLevels[3] = m;
+        m = blockLightLevels[4];
+        m = getMaxBlockLight(m, light0xPy0z);
+        m = getMaxBlockLight(m, light0xPyNz);
+        m = getMaxBlockLight(m, lightNxPy0z);
+        m = getMaxBlockLight(m, light0x0yNz);
+        m = getMaxBlockLight(m, lightNx0y0z);
+        m = getMaxBlockLight(m, lightNx0yNz);
+        m = getMaxBlockLight(m, lightNxPyNz);
+        blockLightLevels[4] = m;
+        m = blockLightLevels[5];
+        m = getMaxBlockLight(m, light0xPy0z);
+        m = getMaxBlockLight(m, light0xPyPz);
+        m = getMaxBlockLight(m, lightNxPy0z);
+        m = getMaxBlockLight(m, lightNx0y0z);
+        m = getMaxBlockLight(m, light0x0yPz);
+        m = getMaxBlockLight(m, lightNx0yPz);
+        m = getMaxBlockLight(m, lightNxPyPz);
+        blockLightLevels[5] = m;
+        m = blockLightLevels[6];
+        m = getMaxBlockLight(m, light0xPy0z);
+        m = getMaxBlockLight(m, light0xPyNz);
+        m = getMaxBlockLight(m, lightPxPy0z);
+        m = getMaxBlockLight(m, light0x0yNz);
+        m = getMaxBlockLight(m, lightPx0y0z);
+        m = getMaxBlockLight(m, lightPx0yNz);
+        m = getMaxBlockLight(m, lightPxPyNz);
+        blockLightLevels[6] = m;
+        m = blockLightLevels[7];
+        m = getMaxBlockLight(m, light0xPy0z);
+        m = getMaxBlockLight(m, light0xPyPz);
+        m = getMaxBlockLight(m, lightPxPy0z);
+        m = getMaxBlockLight(m, lightPx0y0z);
+        m = getMaxBlockLight(m, light0x0yPz);
+        m = getMaxBlockLight(m, lightPx0yPz);
+        m = getMaxBlockLight(m, lightPxPyPz);
+        blockLightLevels[7] = m;
+        return blockLightLevels;
+    }
+
+    public static short getMaxBlockLight(int blockLightA, int blockLightB) {
+        int r = Math.max(blockLightA & 3840, blockLightB & 3840) >> 8;
+        int g = Math.max(blockLightA & 240, blockLightB & 240) >> 4;
+        int b = Math.max(blockLightA & 15, blockLightB & 15);
+        return (short)((r << 8) + (g << 4) + b);
     }
 
     public PauseableThread pauseableThread;
@@ -187,8 +316,10 @@ public class LoneThread {
             try {
 //                Array<MeshData> array = new Array<>();
 //                array.add(meshFromStructure(structure));
+                structure.needsRemeshing = false;
                 Array<MeshData> array = getMeshData(world, pos, structure);
                 dataAtomicReference.set(array);
+                structure.needsToRebuildMesh = true;
             } catch (Exception ignore) {
                 ignore.printStackTrace();
             }

@@ -21,6 +21,7 @@ import finalforeach.cosmicreach.io.CRBinDeserializer;
 import finalforeach.cosmicreach.io.CRBinSerializer;
 import finalforeach.cosmicreach.world.Zone;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.example.exmod.Constants;
 import org.example.exmod.boundingBox.ExtendedBoundingBox;
 import org.example.exmod.mesh.MutliBlockMesh;
 import org.example.exmod.util.MatrixUtil;
@@ -43,16 +44,20 @@ public class BasicShipEntity extends Entity implements IPhysicEntity {
     public Matrix4 transform = new Matrix4();
 
     public BasicShipEntity() {
-        super("base:test2");
+        super(Constants.MOD_ID + ":ship");
 
         if (rotation == null) rotation = new Quaternion(0, 0, 0, 0);
         if (uuid == null) uuid = UUID.randomUUID();
 
         world = new StructureWorld();
         Structure structure00 = new Structure((short) 0, new Identifier("e", "E"));
+        structure00.setParentWorld(world);
         Structure structure01 = new Structure((short) 0, new Identifier("e", "E"));
+        structure01.setParentWorld(world);
         Structure structure10 = new Structure((short) 0, new Identifier("e", "E"));
+        structure10.setParentWorld(world);
         Structure structure11 = new Structure((short) 0, new Identifier("e", "E"));
+        structure11.setParentWorld(world);
 
         BlockState stone = BlockState.getInstance("base:stone_basalt[default]");
         BlockState light = BlockState.getInstance("base:light[power=on,lightRed=0,lightGreen=0,lightBlue=15]");
