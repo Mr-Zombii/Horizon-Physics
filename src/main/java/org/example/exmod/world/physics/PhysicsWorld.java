@@ -37,7 +37,6 @@ public class PhysicsWorld {
     public static void init() {
         space = new PhysicsSpace(PhysicsSpace.BroadphaseType.DBVT);
         space.setGravity(new Vector3f(0, -9.81f, 0));
-
         while (!queuedObjects.isEmpty()) {
             PhysicsBody body = queuedObjects.removeFirst();
             space.addCollisionObject(body);
@@ -52,9 +51,9 @@ public class PhysicsWorld {
             space.addCollisionObject(body);
         }
 
-        for (PhysicsRigidBody object : space.getRigidBodyList()) {
-            System.out.println(object.getPhysicsLocation(null));
-        }
+//        for (PhysicsRigidBody object : space.getRigidBodyList()) {
+//            System.out.println(object.getPhysicsLocation(null));
+//        }
 
         space.update((float) delta);
     }
@@ -87,11 +86,6 @@ public class PhysicsWorld {
     public static void addChunk(Zone zone, Chunk chunk) {
         if (chunk == null) return;
 
-//        for (IPhysicEntity entity : allEntities.values()) {
-//            Chunk currentChunk = zone.getChunkAtPosition(((Entity) entity).position);
-//            if (chunk == currentChunk) entity.getBody().setMass(0);
-//        }
-
         boolean chunkExists = chunkMetaMap.containsKey(chunk);
         ChunkMeta meta = chunkMetaMap.get(chunk);
 
@@ -101,12 +95,18 @@ public class PhysicsWorld {
         IBlockData<BlockState> blocks = chunk.blockData;
         if (blocks == null || blocks.isEntirely((b) -> !b.walkThrough)) return;
 
+//        for (IPhysicEntity entity : allEntities.values()) {
+//            Chunk currentChunk = zone.getChunkAtPosition(((Entity) entity).position);
+//            if (chunk == currentChunk) entity.getBody().setMass(0);
+//        }
+
         CompoundCollisionShape shape = CollisionMeshUtil.createPhysicsMesh(chunk);
         meta.setValidity(ChunkMeta.ChunkValidity.HAS_RIGID_BODY);
         if (!chunkExists) {
             PhysicsRigidBody body = new PhysicsRigidBody(shape, 0);
             body.setPhysicsLocation(new Vector3f(chunk.blockX, chunk.blockY, chunk.blockZ));
-            meta.setBody(addPhysicsBody(body));
+            meta.setBody(body);
+            addPhysicsBody(body);
             chunkMetaMap.put(chunk, meta);
         } else {
             meta.getBody().setCollisionShape(shape);

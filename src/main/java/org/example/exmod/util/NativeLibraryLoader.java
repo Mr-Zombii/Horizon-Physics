@@ -22,21 +22,22 @@ public final class NativeLibraryLoader {
         Platform platform = JmeSystem.getPlatform();
         Platform.Os os = platform.getOs();
         String name = switch (os) {
-            case Android, Linux -> "libbulletjme.so";
-            case MacOS -> "libbulletjme.dylib";
-            case Windows -> "bulletjme.dll";
+            case Android -> "Android_x86_64" + buildType + flavor + "_libbulletjme.so";
+            case Linux -> "Linux64" + buildType + flavor + "_libbulletjme.so";
+            case MacOS -> "MacOSX64" + buildType + flavor + "_libbulletjme.dylib";
+            case Windows -> "Windows64" + buildType + flavor + "_bulletjme.dll";
             default -> throw new RuntimeException("platform = " + platform);
         };
 
 
-        String fullName = platform + buildType + flavor + "_" + name;
+        String fullName = name;
 
         boolean success = false;
         try {
             // have to use a stream
             InputStream in = NativeLibraryLoader.class.getClassLoader().getResourceAsStream("natives/" + fullName);
                     // always write to different location
-            File fileOut = new File(System.getProperty("java.io.tmpdir") + "/cosmicphysics/natives/" + fullName);
+            File fileOut = new File(System.getProperty("java.io.tmpdir") + "/funni_blocks/natives/" + fullName);
             logger.info("Writing native to: " + fileOut.getAbsolutePath());
             OutputStream out = FileUtils.openOutputStream(fileOut);
             assert in != null;

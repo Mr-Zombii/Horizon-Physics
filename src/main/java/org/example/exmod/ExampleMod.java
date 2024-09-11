@@ -12,6 +12,7 @@ import com.github.puzzle.loader.entrypoint.interfaces.ModInitializer;
 import finalforeach.cosmicreach.entities.EntityCreator;
 import org.example.exmod.commands.Commands;
 import org.example.exmod.entity.BasicPhysicsEntity;
+import org.example.exmod.entity.BasicShipEntity;
 import org.example.exmod.entity.WorldCube;
 import org.example.exmod.items.MoonScepter;
 import org.example.exmod.mesh.LoneThread;
@@ -32,10 +33,11 @@ public class ExampleMod implements ModInitializer {
 
         EntityCreator.registerEntityCreator(Constants.MOD_ID + ":entity", () -> new WorldCube());
         EntityCreator.registerEntityCreator("base:test", BasicPhysicsEntity::new);
+        EntityCreator.registerEntityCreator("base:test2", BasicShipEntity::new);
 
         IModItem.registerItem(new MoonScepter());
 
-        boolean success = NativeLibraryLoader.loadLibbulletjme("Debug", "Sp");
+        boolean success = NativeLibraryLoader.loadLibbulletjme("Release", "Sp");
         if (!success) {
             throw new RuntimeException("Failed to load native library. Please contact nab138, he may need to add support for your platform.");
         }

@@ -23,9 +23,12 @@ public class CollisionMeshUtil {
                     int globalZ = (pos.z() * 16) + z;
 
                     BlockState state = chunk.getBlockState(x, y, z);
-                    if (!isCollideableState(state)) continue;
-                    CollisionShape blockCollisionShape = shapeFromBlockState(state);
-                    mesh.addChildShape(blockCollisionShape, new Vector3f(globalX, globalY, globalZ));
+                    if (!isCollideableState(state)) { continue; }
+                    Vector3 pos2 = new Vector3(x, y, z);
+                    BoxCollisionShape boxShape = new BoxCollisionShape(new Vector3f(0.5f, 0.5f, 0.5f));
+                    mesh.addChildShape(boxShape, new Vector3f(globalX, globalY, globalZ));
+//                    CollisionShape blockCollisionShape = shapeFromBlockState(state);
+//                    mesh.addChildShape(blockCollisionShape, new Vector3f(globalX, y, globalZ));
                 }
             }
         }
@@ -45,9 +48,9 @@ public class CollisionMeshUtil {
                     if (!isCollideableState(state)) continue;
                     Vector3 pos = new Vector3(x, y, z);
                     BoxCollisionShape boxShape = new BoxCollisionShape(new Vector3f(0.5f, 0.5f, 0.5f));
-                    mesh.addChildShape(boxShape, new Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f));
+                    mesh.addChildShape(boxShape, new Vector3f(pos.x, pos.y, pos.z));
 //                    CollisionShape blockCollisionShape = shapeFromBlockState(state);
-//                    mesh.addChildShape(blockCollisionShape, new Vector3f(globalX, globalY, globalZ));
+//                    mesh.addChildShape(blockCollisionShape, new Vector3f(x, y, z));
                 }
             }
         }
@@ -73,23 +76,24 @@ public class CollisionMeshUtil {
         while (!boundingBoxes.isEmpty()) {
             BoundingBox box = boundingBoxes.pop();
 
-            collisionShape.addChildShape(shapeFromAABB(box), new Vector3f(box.min.x, box.min.y, box.min.z));
+            collisionShape.addChildShape(shapeFromAABB(box), new Vector3f(0, 0, 0));
         }
 
         return collisionShape;
     }
 
+    public static Vector3f minMaxToExtents(Vector3 min, Vector3 max) {
+        Vector3f extents = new Vector3f();
+        extents.x = (max.x - min.x) / 2;
+        extents.y = (max.y - min.y) / 2;
+        extents.z = (max.z - min.z) / 2;
+        return extents;
+    }
+
     public static BoxCollisionShape shapeFromAABB(BoundingBox bb) {
-        Vector3 c000 = bb.getCorner000(new Vector3());
-        Vector3 c001 = bb.getCorner001(new Vector3());
-        Vector3 c010 = bb.getCorner010(new Vector3());
-        Vector3 c100 = bb.getCorner100(new Vector3());
+        Vector3f extents = minMaxToExtents(bb.min, bb.max);
 
-        float extentX = c001.sub(c000).x;
-        float extentY = c010.sub(c000).y;
-        float extentZ = c100.sub(c000).z;
-
-        return new BoxCollisionShape(extentX, extentY, extentZ);
+        return new BoxCollisionShape(extents);
     }
 
     public static boolean isCollideableState(BlockState state) {

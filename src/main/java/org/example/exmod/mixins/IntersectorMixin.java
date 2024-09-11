@@ -5,7 +5,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.OrientedBoundingBox;
 import com.badlogic.gdx.math.collision.Ray;
-import org.example.exmod.boundingBox.OrientedBoundingBoxGetter;
+import org.example.exmod.boundingBox.ExtendedBoundingBox;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -129,8 +129,12 @@ public abstract class IntersectorMixin {
 
     @Inject(method = "intersectRayBounds", at = @At("HEAD"), cancellable = true)
     private static void intersectRayBounds0(Ray ray, BoundingBox box, Vector3 intersection, CallbackInfoReturnable<Boolean> cir) {
-        if (((OrientedBoundingBoxGetter) box).hasInnerBounds()) {
-            cir.setReturnValue(intersectRayOrientedBounds(ray, ((OrientedBoundingBoxGetter) box).getInnerBounds(), intersection));
+        if (!((ExtendedBoundingBox) box).shouldCollideWith()) {
+            cir.setReturnValue(false);
+            return;
+        }
+        if (((ExtendedBoundingBox) box).hasInnerBounds()) {
+            cir.setReturnValue(intersectRayOrientedBounds(ray, ((ExtendedBoundingBox) box).getInnerBounds(), intersection));
             return;
         }
         cir.setReturnValue(intersectRayBounds(ray, box, intersection));

@@ -157,7 +157,7 @@ public class StructureWorld {
 
     public void rebuildCollisionShape() {
         forEachChunk((pos, chunk) -> {
-            CollisionMeshUtil.createPhysicsMesh(pos, chunk);
+            CollisionMeshUtil.createPhysicsMesh(CCS, pos, chunk);
         });
     }
 

@@ -1,18 +1,18 @@
 package org.example.exmod.mixins;
 
-import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.OrientedBoundingBox;
-import org.example.exmod.boundingBox.OrientedBoundingBoxGetter;
+import org.example.exmod.boundingBox.ExtendedBoundingBox;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(BoundingBox.class)
-public abstract class BoundingBoxMixin implements OrientedBoundingBoxGetter {
+public abstract class BoundingBoxMixin implements ExtendedBoundingBox {
 
+    private boolean shouldCollideWith = true;
     @Shadow @Final public Vector3 min;
     @Shadow @Final public Vector3 max;
 
@@ -23,8 +23,8 @@ public abstract class BoundingBoxMixin implements OrientedBoundingBoxGetter {
 
     @Inject(method = "set(Lcom/badlogic/gdx/math/collision/BoundingBox;)Lcom/badlogic/gdx/math/collision/BoundingBox;", at = @At("HEAD"))
     public void set0(BoundingBox bounds, CallbackInfoReturnable<BoundingBox> cir) {
-        if (((OrientedBoundingBoxGetter)bounds).hasInnerBounds()) {
-            exampleMod$innerBoundingBox = ((OrientedBoundingBoxGetter)bounds).getInnerBounds();
+        if (((ExtendedBoundingBox)bounds).hasInnerBounds()) {
+            exampleMod$innerBoundingBox = ((ExtendedBoundingBox)bounds).getInnerBounds();
         } else exampleMod$innerBoundingBox = null;
     }
 
@@ -41,6 +41,16 @@ public abstract class BoundingBoxMixin implements OrientedBoundingBoxGetter {
     @Override
     public void setInnerBounds(OrientedBoundingBox boundingBox) {
         exampleMod$innerBoundingBox = boundingBox;
+    }
+
+    @Override
+    public boolean shouldCollideWith() {
+        return shouldCollideWith;
+    }
+
+    @Override
+    public void shouldCollideWith(boolean b) {
+        this.shouldCollideWith = b;
     }
 
     /**

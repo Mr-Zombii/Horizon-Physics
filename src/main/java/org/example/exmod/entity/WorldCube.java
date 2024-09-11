@@ -17,7 +17,7 @@ import finalforeach.cosmicreach.io.CRBinSerializer;
 import finalforeach.cosmicreach.world.Zone;
 import finalforeach.cosmicreach.worldgen.noise.SimplexNoise;
 import org.example.exmod.Constants;
-import org.example.exmod.boundingBox.OrientedBoundingBoxGetter;
+import org.example.exmod.boundingBox.ExtendedBoundingBox;
 import org.example.exmod.mesh.MutliBlockMesh;
 import org.example.exmod.world.Structure;
 import org.example.exmod.world.StructureWorld;
@@ -134,8 +134,8 @@ public class WorldCube extends Entity {
         oBoundingBox.setBounds(world.AABB);
         oBoundingBox.setTransform(transform);
 
-        if (!((OrientedBoundingBoxGetter)localBoundingBox).hasInnerBounds()) {
-            ((OrientedBoundingBoxGetter)localBoundingBox).setInnerBounds(oBoundingBox);
+        if (!((ExtendedBoundingBox)localBoundingBox).hasInnerBounds()) {
+            ((ExtendedBoundingBox)localBoundingBox).setInnerBounds(oBoundingBox);
         }
 
         getBoundingBox(globalBoundingBox);
@@ -184,7 +184,7 @@ public class WorldCube extends Entity {
 
     @Override
     public void getBoundingBox(BoundingBox boundingBox) {
-        ((OrientedBoundingBoxGetter) boundingBox).setInnerBounds(oBoundingBox);
+        ((ExtendedBoundingBox) boundingBox).setInnerBounds(oBoundingBox);
         boundingBox.update();
     }
 }

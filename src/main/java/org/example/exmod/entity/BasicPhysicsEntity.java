@@ -2,16 +2,12 @@ package org.example.exmod.entity;
 
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
-import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.OrientedBoundingBox;
 import com.github.puzzle.core.Identifier;
-import com.github.puzzle.core.resources.PuzzleGameAssetLoader;
 import com.github.puzzle.game.util.Reflection;
 import com.github.puzzle.util.Vec3i;
-import com.jme3.bullet.collision.shapes.BoxCollisionShape;
 import com.jme3.bullet.objects.PhysicsBody;
 import com.jme3.bullet.objects.PhysicsRigidBody;
 import com.jme3.math.Quaternion;
@@ -25,7 +21,7 @@ import finalforeach.cosmicreach.io.CRBinDeserializer;
 import finalforeach.cosmicreach.io.CRBinSerializer;
 import finalforeach.cosmicreach.world.Zone;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.example.exmod.boundingBox.OrientedBoundingBoxGetter;
+import org.example.exmod.boundingBox.ExtendedBoundingBox;
 import org.example.exmod.mesh.MutliBlockMesh;
 import org.example.exmod.util.MatrixUtil;
 import org.example.exmod.world.Structure;
@@ -38,7 +34,7 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
 
     public PhysicsRigidBody body;
 
-    public Vector3 rotation;
+    public Quaternion rotation;
     UUID uuid;
     float mass = 5;
 
@@ -49,7 +45,7 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
     public BasicPhysicsEntity() {
         super("base:test");
 
-        if (rotation == null) rotation = new Vector3(0, 0, 0);
+        if (rotation == null) rotation = new Quaternion(0, 0, 0, 0);
         if (uuid == null) uuid = UUID.randomUUID();
 
         world = new StructureWorld();
@@ -79,8 +75,6 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
         world.rebuildCollisionShape();
 
         body = new PhysicsRigidBody(world.CCS);
-        body.setPhysicsLocation(new Vector3f(position.x, position.y, position.z));
-        body.setMass(mass);
 
         Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(world));
 
@@ -108,29 +102,29 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
     @Override
     public void update(Zone zone, double deltaTime) {
         PhysicsWorld.alertChunk(zone, zone.getChunkAtPosition(position));
-        MatrixUtil.rotateAroundOrigin2(oBoundingBox, transform, position, rotation);
+        MatrixUtil.rotateAroundOrigin3(oBoundingBox, transform, position, rotation);
 
         oBoundingBox.setBounds(world.AABB);
         oBoundingBox.setTransform(transform);
 
         if (!hasInit) {
+            PhysicsWorld.alertChunk(zone, zone.getChunkAtPosition(position));
             body.setPhysicsLocation(new Vector3f(position.x, position.y, position.z));
             body.setMass(5);
-            PhysicsWorld.alertChunk(zone, zone.getChunkAtPosition(position));
             hasInit = true;
+
 
             PhysicsWorld.addEntity(this);
             body.activate(true);
         } else {
             Vector3f vector3f = body.getPhysicsLocation(new Vector3f());
             position.set(vector3f.x, vector3f.y, vector3f.z);
-            Quaternion quaternion = body.getPhysicsRotation(new Quaternion());
-            rotation = new Vector3(quaternion.getX(), quaternion.getY(), quaternion.getZ());
+            rotation = body.getPhysicsRotation(new Quaternion());
 //            System.out.println(vector3f);
         }
 
-        if (!((OrientedBoundingBoxGetter)localBoundingBox).hasInnerBounds()) {
-            ((OrientedBoundingBoxGetter)localBoundingBox).setInnerBounds(oBoundingBox);
+        if (!((ExtendedBoundingBox)localBoundingBox).hasInnerBounds()) {
+            ((ExtendedBoundingBox)localBoundingBox).setInnerBounds(oBoundingBox);
         }
 
         getBoundingBox(globalBoundingBox);
@@ -140,7 +134,7 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
 
     @Override
     public void getBoundingBox(BoundingBox boundingBox) {
-        ((OrientedBoundingBoxGetter) boundingBox).setInnerBounds(oBoundingBox);
+        ((ExtendedBoundingBox) boundingBox).setInnerBounds(oBoundingBox);
         boundingBox.update();
     }
 
@@ -154,14 +148,16 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
         }, UUID.randomUUID());
 
         rotation = IPhysicEntity.readOrDefault(() -> {
-            float yaw = deserial.readFloat("yaw", rotation.x);
-            float pitch = deserial.readFloat("pitch", rotation.y);
-            float roll = deserial.readFloat("roll", rotation.z);
+            float rot_x = deserial.readFloat("rot_x", 0);
+            float rot_y = deserial.readFloat("rot_y", 0);
+            float rot_z = deserial.readFloat("rot_z", 0);
+            float rot_w = deserial.readFloat("rot_w", 0);
 
-            return new Vector3(0, 0, 0);
-        }, new Vector3(0, 0, 0));
+            return new Quaternion(rot_x, rot_y, rot_z, rot_w);
+        }, new Quaternion(0, 0, 0, 0));
 
         body.setPhysicsLocation(new Vector3f(position.x, position.y, position.z));
+        body.setPhysicsRotation(rotation);
     }
 
     @Override
@@ -170,9 +166,10 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
 
         serial.writeString("uuid", uuid == null ? UUID.randomUUID().toString() : uuid.toString());
 
-        serial.writeFloat("yaw", rotation.x);
-        serial.writeFloat("pitch", rotation.y);
-        serial.writeFloat("roll", rotation.z);
+        serial.writeFloat("rot_x", rotation.getX());
+        serial.writeFloat("rot_y", rotation.getY());
+        serial.writeFloat("rot_z", rotation.getZ());
+        serial.writeFloat("rot_w", rotation.getW());
     }
 
     @Override
@@ -182,7 +179,7 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
         this.lastRenderPosition.set(tmpRenderPos);
         if (worldCamera.frustum.boundsInFrustum(this.globalBoundingBox)) {
             tmpModelMatrix.idt();
-            MatrixUtil.rotateAroundOrigin2(oBoundingBox, tmpModelMatrix, position, rotation);
+            MatrixUtil.rotateAroundOrigin3(oBoundingBox, tmpModelMatrix, position, rotation);
             if (modelInstance != null) {
                 modelInstance.render(this, worldCamera, tmpModelMatrix);
             }
@@ -196,8 +193,7 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
     }
 
     @Override
-    @NonNull
-    public Vector3 getEularRotation() {
+    public Quaternion getEularRotation() {
         return rotation;
     }
 
@@ -213,7 +209,7 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
     }
 
     @Override
-    public void setEularRotation(Vector3 rot) {
+    public void setEularRotation(Quaternion rot) {
         this.rotation = rot;
     }
 
