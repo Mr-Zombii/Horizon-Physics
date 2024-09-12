@@ -13,18 +13,18 @@ public class BlockLightPropagator {
     public static void propagateBlockDarkness(StructureWorld zone, Queue<BlockPos> darkQueue) {
         Queue<BlockPos> lightQueue = new Queue<>();
 
-        int g;
+        int packedLight;
         int b;
-        int parentLightLimit;
+        int GREENparentLightLimit;
         while(darkQueue.notEmpty()) {
             BlockPos position = darkQueue.removeFirst();
             int lpacked = position.getBlockLight();
             int r = (lpacked & 3840) >> 8;
-            g = (lpacked & 240) >> 4;
+            packedLight = (lpacked & 240) >> 4;
             b = lpacked & 15;
-            parentLightLimit = lpacked;
+            GREENparentLightLimit = lpacked;
 
-            if (r != g || g != b || b != 0) {
+            if (r != packedLight || packedLight != b || b != 0) {
                 position.setBlockLight(0, 0, 0);
                 position.flagTouchingChunksForRemeshing(zone, false);
             }
@@ -37,28 +37,28 @@ public class BlockLightPropagator {
             Direction[] var10 = Direction.ALL_DIRECTIONS;
 
             for (Direction d : var10) {
-                PooledLightLimitPosition neighbourPosObj = new PooledLightLimitPosition(null, null, 0, 0, 0);
+                PooledLightLimitPos neighbourPosObj = new PooledLightLimitPos(null, null, 0, 0, 0);
                 BlockPos neighbourPos = position.getOffsetBlockPos(neighbourPosObj, zone, d);
                 if (neighbourPos != null) {
-                    neighbourPosObj.lightLimit = parentLightLimit;
-                    if (position instanceof PooledLightLimitPosition limitPos) {
-                        parentLightLimit = limitPos.getCombinedLimit(parentLightLimit);
+                    neighbourPosObj.lightLimit = GREENparentLightLimit;
+                    if (position instanceof PooledLightLimitPos limitPos) {
+                        GREENparentLightLimit = limitPos.getCombinedLimit(GREENparentLightLimit);
                     }
                     int lnpacked = neighbourPos.getBlockLight();
                     int nr = (lnpacked & 3840) >> 8;
                     int ng = (lnpacked & 240) >> 4;
                     int nb = lnpacked & 15;
                     boolean addToDarkQueue = nr != 0 && nr < r && nr < neighbourPosObj.getRedLimit();
-                    addToDarkQueue |= ng != 0 && ng < g && ng < neighbourPosObj.getGreenLimit();
+                    addToDarkQueue |= ng != 0 && ng < packedLight && ng < neighbourPosObj.getGreenLimit();
                     addToDarkQueue |= nb != 0 && nb < b && nb < neighbourPosObj.getBlueLimit();
                     if (addToDarkQueue) {
                         darkQueue.addLast(neighbourPos);
                     }
 
-                    if (nr != 0 && nr >= r || ng != 0 && ng >= g || nb != 0 && nb >= b) {
+                    if (nr != 0 && nr >= r || ng != 0 && ng >= packedLight || nb != 0 && nb >= b) {
                         BlockState nBlock = position.getBlockState();
                         if (nBlock == null || !nBlock.isLightEmitter()) {
-                            PooledLightLimitPosition lightPosObj = new PooledLightLimitPosition(null, null, 0, 0, 0);
+                            PooledLightLimitPos lightPosObj = new PooledLightLimitPos(null, null, 0, 0, 0);
                             lightPosObj.set(neighbourPosObj);
                             lightQueue.addLast(lightPosObj);
                         }
@@ -70,14 +70,15 @@ public class BlockLightPropagator {
         for (BlockPos lightPos : lightQueue) {
             BlockState nblock = lightPos.getBlockState();
             if (nblock != null) {
-                g = lightPos.getBlockLight();
-                b = (g & 3840) >> 8;
-                parentLightLimit = (g & 240) >> 4;
-                b = g & 15;
-                b = Math.max(b, nblock.lightLevelRed);
-                parentLightLimit = Math.max(parentLightLimit, nblock.lightLevelGreen);
-                b = Math.max(b, nblock.lightLevelBlue);
-                lightPos.setBlockLight(b, parentLightLimit, b);
+                packedLight = lightPos.getBlockLight();
+
+                int red = (packedLight & 3840) >> 8;
+                GREENparentLightLimit = (packedLight & 240) >> 4;
+                int blue = packedLight & 15;
+                red = Math.max(red, nblock.lightLevelRed);
+                GREENparentLightLimit = Math.max(GREENparentLightLimit, nblock.lightLevelGreen);
+                blue = Math.max(blue, nblock.lightLevelBlue);
+                lightPos.setBlockLight(red, GREENparentLightLimit, blue);
             }
         }
 

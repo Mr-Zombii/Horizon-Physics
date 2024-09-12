@@ -31,7 +31,6 @@ public class LoneThread {
     LoneThreadRunnable runnable = new LoneThreadRunnable();
 
     private static final Array<MeshData> emptyMeshDatas = new Array(false, 0, MeshData.class);
-    private static final Structure emptyStructure = new Structure((short) 0, new Identifier(Constants.MOD_ID, "empty"));
     public boolean started;
 
     static Array<MeshData> getMeshData(StructureWorld world, Vec3i pos, Structure chunk) {
@@ -49,7 +48,7 @@ public class LoneThread {
                 short[] blockLightLevels = new short[8];
                 int[] skyLightLevels = new int[8];
 
-                Arrays.fill(skyLightLevels, (short) 4095);
+                Arrays.fill(skyLightLevels, Short.MAX_VALUE);
 //                Arrays.fill(blockLightLevels, (short) 4095);
 
                 Pair<Vec3i, Structure> chunkNegX = world.getChunkAtChunkCoords(new Vec3i(pos.x() - 1, pos.y(), pos.z())) != null ? new ImmutablePair<>(new Vec3i(pos.x() - 1, pos.y(), pos.z()), world.getChunkAtChunkCoords(new Vec3i(pos.x() - 1, pos.y(), pos.z()))) : null;
@@ -175,10 +174,10 @@ public class LoneThread {
             lightLevel = chunk.getBlockLight(localX, localY, localZ);
 //        }
 
-        Arrays.fill(blockLightLevels, (short) lightLevel);
-        int globalX = chunk.getBlockPos().x() + localX;
-        int globalY = chunk.getBlockPos().y() + localY;
-        int globalZ = chunk.getBlockPos().z() + localZ;
+        Arrays.fill(blockLightLevels, lightLevel);
+        int globalX = chunk.blockPos.x() + localX;
+        int globalY = chunk.blockPos.y() + localY;
+        int globalZ = chunk.blockPos.z() + localZ;
         int lightNxNyNz = zone.getBlockLight(chunk, globalX - 1, globalY - 1, globalZ - 1);
         int lightNxNy0z = zone.getBlockLight(chunk, globalX - 1, globalY - 1, globalZ);
         int lightNxNyPz = zone.getBlockLight(chunk, globalX - 1, globalY - 1, globalZ + 1);

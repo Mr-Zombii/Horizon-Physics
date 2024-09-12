@@ -7,28 +7,36 @@ import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.OrientedBoundingBox;
 import com.github.puzzle.core.Identifier;
 import com.github.puzzle.util.Vec3i;
+import com.jme3.bullet.objects.PhysicsBody;
 import com.jme3.bullet.objects.PhysicsRigidBody;
+import com.jme3.math.Quaternion;
+import com.jme3.math.Vector3f;
 import finalforeach.cosmicreach.Threads;
 import finalforeach.cosmicreach.TickRunner;
 import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.entities.Entity;
+import finalforeach.cosmicreach.gamestates.InGame;
 import finalforeach.cosmicreach.io.CRBinDeserializer;
 import finalforeach.cosmicreach.io.CRBinSerializer;
 import finalforeach.cosmicreach.world.Zone;
 import finalforeach.cosmicreach.worldgen.noise.SimplexNoise;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.example.exmod.Constants;
-import org.example.exmod.boundingBox.ExtendedBoundingBox;
+import org.example.exmod.bounds.ExtendedBoundingBox;
 import org.example.exmod.mesh.MutliBlockMesh;
+import org.example.exmod.util.DebugRenderUtil;
+import org.example.exmod.util.InGameAccess;
 import org.example.exmod.world.Structure;
 import org.example.exmod.world.StructureWorld;
 import org.example.exmod.util.MatrixUtil;
+import org.example.exmod.world.physics.PhysicsWorld;
 
 import java.util.UUID;
 import java.util.function.Supplier;
 
 // /summon funni-blocks:entity
 
-public class WorldCube extends Entity {
+public class WorldCube extends Entity implements IPhysicEntity {
 
     public StructureWorld world;
     public PhysicsRigidBody rigidBody;
@@ -44,7 +52,7 @@ public class WorldCube extends Entity {
         BlockState air = BlockState.getInstance("base:air[default]");
         BlockState stoneBlock = BlockState.getInstance("base:stone_basalt[default]");
 //        BlockState waterBlock = BlockState.getInstance("base:water[default]");
-        BlockState waterBlock = BlockState.getInstance("base:light[power=on,lightRed=15,lightGreen=0,lightBlue=0]");
+        BlockState waterBlock = BlockState.getInstance("base:light[power=on,lightRed=0,lightGreen=15,lightBlue=0]");
 
         for(int localX = 0; localX < 16; localX++) {
             int globalX = (vec3i.x() * 16) + localX;
@@ -101,14 +109,17 @@ public class WorldCube extends Entity {
 
                     Structure structure = new Structure(
                             (short) 0,
+                            new Vec3i(x, y, z),
                             new Identifier("base", "test")
                     );
                     structure.setParentWorld(world);
                     generateChunk(structure, vec3i);
-                    world.putChunkAt(vec3i, structure);
+                    world.putChunkAt(structure);
                 }
             }
         }
+        world.rebuildCollisionShape();
+        rigidBody = new PhysicsRigidBody(world.CCS);
 
         Threads.runOnMainThread(() -> modelInstance = new MutliBlockMesh(world));
 
@@ -117,6 +128,8 @@ public class WorldCube extends Entity {
 
     @Override
     public void render(Camera worldCamera) {
+//        DebugRenderUtil.renderRigidBody(((InGameAccess) InGame.IN_GAME).getShapeRenderer(), rigidBody);
+
         tmpRenderPos.set(this.lastRenderPosition);
         TickRunner.INSTANCE.partTickLerp(tmpRenderPos, this.position);
         this.lastRenderPosition.set(tmpRenderPos);
@@ -131,6 +144,7 @@ public class WorldCube extends Entity {
 
     @Override
     public void update(Zone zone, double deltaTime) {
+        PhysicsWorld.alertChunk(zone, zone.getChunkAtPosition(position));
         MatrixUtil.rotateAroundOrigin2(oBoundingBox, transform, position, rotation);
 
         oBoundingBox.setBounds(world.AABB);
@@ -138,13 +152,54 @@ public class WorldCube extends Entity {
 
         if (!((ExtendedBoundingBox)localBoundingBox).hasInnerBounds()) {
             ((ExtendedBoundingBox)localBoundingBox).setInnerBounds(oBoundingBox);
+            rigidBody.setPhysicsRotation(getEularRotation());
+            rigidBody.setPhysicsLocation(new Vector3f(position.x, position.y, position.z));
+            rigidBody.setMass(0);
+            PhysicsWorld.addEntity(this);
         }
 
         getBoundingBox(globalBoundingBox);
-        rotation.x += 1f;
-        rotation.y += 1f;
-        rotation.z += 1f;
+        rigidBody.setPhysicsRotation(getEularRotation());
+        rotation.x = 0;
+        rotation.y = 0;
+        rotation.z = 0;
         super.updateEntityChunk(zone);
+    }
+
+    @Override
+    public @NonNull PhysicsBody getBody() {
+        return rigidBody;
+    }
+
+    @Override
+    public Quaternion getEularRotation() {
+        com.badlogic.gdx.math.Quaternion quaternion = transform.getRotation(new com.badlogic.gdx.math.Quaternion());
+        return new Quaternion(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
+    }
+
+    @Override
+    public @NonNull UUID getUUID() {
+        return uuid;
+    }
+
+    @Override
+    public float getMass() {
+        return 0;
+    }
+
+    @Override
+    public void setEularRotation(Quaternion rot) {
+
+    }
+
+    @Override
+    public void setUUID(UUID uuid) {
+
+    }
+
+    @Override
+    public void setMass(float mass) {
+
     }
 
     <T> T readOrDefault(Supplier<T> read, T _default) {

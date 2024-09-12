@@ -6,10 +6,12 @@ import com.github.puzzle.core.localization.LanguageManager;
 import com.github.puzzle.core.localization.files.LanguageFileVersion1;
 import com.github.puzzle.core.resources.ResourceLocation;
 import com.github.puzzle.game.events.OnPreLoadAssetsEvent;
+import com.github.puzzle.game.events.OnRegisterBlockEvent;
 import com.github.puzzle.game.events.OnRegisterZoneGenerators;
 import com.github.puzzle.game.items.IModItem;
 import com.github.puzzle.loader.entrypoint.interfaces.ModInitializer;
 import finalforeach.cosmicreach.entities.EntityCreator;
+import org.example.exmod.blocks.Chair;
 import org.example.exmod.commands.Commands;
 import org.example.exmod.entity.BasicPhysicsEntity;
 import org.example.exmod.entity.BasicShipEntity;
@@ -45,6 +47,11 @@ public class ExampleMod implements ModInitializer {
         if (!success) {
             throw new RuntimeException("Failed to load native library. Please contact nab138, he may need to add support for your platform.");
         }
+    }
+
+    @Subscribe
+    public void onEvent(OnRegisterBlockEvent event) {
+        event.registerBlock(Chair::new);
     }
 
     @Subscribe

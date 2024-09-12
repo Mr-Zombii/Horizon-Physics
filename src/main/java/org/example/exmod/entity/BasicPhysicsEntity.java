@@ -17,13 +17,16 @@ import finalforeach.cosmicreach.TickRunner;
 import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.entities.Entity;
 import finalforeach.cosmicreach.gamestates.GameState;
+import finalforeach.cosmicreach.gamestates.InGame;
 import finalforeach.cosmicreach.io.CRBinDeserializer;
 import finalforeach.cosmicreach.io.CRBinSerializer;
 import finalforeach.cosmicreach.world.Zone;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.example.exmod.Constants;
-import org.example.exmod.boundingBox.ExtendedBoundingBox;
+import org.example.exmod.bounds.ExtendedBoundingBox;
 import org.example.exmod.mesh.MutliBlockMesh;
+import org.example.exmod.util.DebugRenderUtil;
+import org.example.exmod.util.InGameAccess;
 import org.example.exmod.util.MatrixUtil;
 import org.example.exmod.world.Structure;
 import org.example.exmod.world.StructureWorld;
@@ -50,13 +53,13 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
         if (uuid == null) uuid = UUID.randomUUID();
 
         world = new StructureWorld();
-        Structure structure00 = new Structure((short) 0, new Identifier("e", "E"));
+        Structure structure00 = new Structure((short) 0, new Vec3i(0, 0, 0), new Identifier("e", "E"));
         structure00.setParentWorld(world);
-        Structure structure01 = new Structure((short) 0, new Identifier("e", "E"));
+        Structure structure01 = new Structure((short) 0, new Vec3i(-1, 0, 0), new Identifier("e", "E"));
         structure01.setParentWorld(world);
-        Structure structure10 = new Structure((short) 0, new Identifier("e", "E"));
+        Structure structure10 = new Structure((short) 0, new Vec3i(0, 0, -1), new Identifier("e", "E"));
         structure10.setParentWorld(world);
-        Structure structure11 = new Structure((short) 0, new Identifier("e", "E"));
+        Structure structure11 = new Structure((short) 0, new Vec3i(-1, 0, -1), new Identifier("e", "E"));
         structure11.setParentWorld(world);
 
         BlockState stone = BlockState.getInstance("base:stone_basalt[default]");
@@ -69,14 +72,19 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
                 structure11.setBlockState(stone, x + 8, 0, z + 8);
             }
         }
+        BlockState chair = BlockState.getInstance(Constants.MOD_ID + ":chair[default]");
         structure00.setBlockState(light, 0, 1, 0);
         structure01.setBlockState(light, 15, 1, 0);
         structure10.setBlockState(light, 0, 1, 15);
         structure11.setBlockState(light, 15, 1, 15);
-        world.putChunkAt(new Vec3i(0, 0, 0), structure00);
-        world.putChunkAt(new Vec3i(-1, 0, 0), structure01);
-        world.putChunkAt(new Vec3i(0, 0, -1), structure10);
-        world.putChunkAt(new Vec3i(-1, 0, -1), structure11);
+//        structure00.setBlockState(chair, 0, 1, 0);
+//        structure01.setBlockState(chair, 15, 1, 0);
+//        structure10.setBlockState(chair, 0, 1, 15);
+//        structure11.setBlockState(chair, 15, 1, 15);
+        world.putChunkAt(structure00);
+        world.putChunkAt(structure01);
+        world.putChunkAt(structure10);
+        world.putChunkAt(structure11);
         world.rebuildCollisionShape();
 
         body = new PhysicsRigidBody(world.CCS);
@@ -99,9 +107,9 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
 
     @Override
     public void hit(float amount) {
-        body.activate(true);
-        PerspectiveCamera cam = Reflection.getFieldContents(GameState.IN_GAME, "rawWorldCamera");
-        body.setLinearVelocity(new Vector3f(cam.direction.cpy().scl(12).x, cam.direction.cpy().scl(12).y, cam.direction.cpy().scl(12).z));
+//        body.activate(true);
+//        PerspectiveCamera cam = Reflection.getFieldContents(GameState.IN_GAME, "rawWorldCamera");
+//        body.setLinearVelocity(new Vector3f(cam.direction.cpy().scl(12).x, cam.direction.cpy().scl(12).y, cam.direction.cpy().scl(12).z));
     }
 
     @Override
@@ -179,6 +187,8 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
 
     @Override
     public void render(Camera worldCamera) {
+        DebugRenderUtil.renderRigidBody(((InGameAccess) InGame.IN_GAME).getShapeRenderer(), position, body);
+
         tmpRenderPos.set(this.lastRenderPosition);
         TickRunner.INSTANCE.partTickLerp(tmpRenderPos, this.position);
         this.lastRenderPosition.set(tmpRenderPos);

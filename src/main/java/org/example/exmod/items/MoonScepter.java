@@ -113,7 +113,7 @@ public class MoonScepter implements IModItem {
         Queue<BlockPosition> positions = new Queue<>();
 
         StructureWorld world = new StructureWorld();
-        Structure structure = new Structure((short) 0, new Identifier(Constants.MOD_ID, "ea"));
+        Structure structure = new Structure((short) 0, new Vec3i(0, 0, 0), new Identifier(Constants.MOD_ID, "ea"));
         for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 16; y++) {
                 for (int z = 0; z < 16; z++) {
@@ -125,7 +125,7 @@ public class MoonScepter implements IModItem {
                 }
             }
         }
-        world.putChunkAt(new Vec3i(0, 0, 0), structure);
+        world.putChunkAt(structure);
         BlockSetter.get().replaceBlocks(position.getZone(), BlockState.getInstance("base:air[default]"), positions);
 
         Entity e = new WorldCube(world);

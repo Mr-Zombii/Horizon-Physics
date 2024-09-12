@@ -1,4 +1,4 @@
-package org.example.exmod.boundingBox;
+package org.example.exmod.bounds;
 
 import com.badlogic.gdx.math.collision.OrientedBoundingBox;
 

@@ -28,14 +28,10 @@ public class StructureWorld {
     public boolean hasCollisionShape = false;
     public boolean nullSideChunks = false;
 
-    private static final Structure emptyStructure = new Structure((short) 0, new Identifier(Constants.MOD_ID, "empty"));
+    public static final Structure emptyStructure = new LockedStructure((short) 0, new Vec3i(0, 0, 0), new Identifier(Constants.MOD_ID, "empty"));
 
     public Structure getChunkAtBlock(int x, int y, int z) {
-        int cx = Math.floorDiv(x, 16);
-        int cy = Math.floorDiv(y, 16);
-        int cz = Math.floorDiv(z, 16);
-
-        return structureMap.get(new Vec3i(cx, cy, cz)) == null ? (nullSideChunks ? null : emptyStructure) : structureMap.get(new Vec3i(cx, cy, cz));
+        return getChunkAtBlock(new Vec3i(x, y, z));
     }
 
     public Structure getChunkAtBlock(Vec3i blockPos) {
@@ -109,10 +105,9 @@ public class StructureWorld {
         );
     }
 
-    public Structure putChunkAt(Vec3i pos, Structure structure) {
+    public Structure putChunkAt(Structure structure) {
         if (structure != null) {
-            structure.setChunkPos(pos);
-            structureMap.put(pos, structure);
+            structureMap.put(structure.chunkPos, structure);
             recalculateBounds();
         }
         return structure;
@@ -176,7 +171,7 @@ public class StructureWorld {
         int cy = Math.floorDiv(y, 16);
         int cz = Math.floorDiv(z, 16);
         Structure c;
-        if (chunk != null && chunk.getChunkPos().x() == cx && chunk.getChunkPos().y() == cy && chunk.getChunkPos().z() == cz) {
+        if (chunk != null && chunk.chunkPos.x() == cx && chunk.chunkPos.y() == cy && chunk.chunkPos.z() == cz) {
             c = chunk;
         } else {
             c = this.getChunkAtBlock(x, y, z);
@@ -190,5 +185,11 @@ public class StructureWorld {
             z -= 16 * cz;
             return c.getBlockLight(x, y, z);
         }
+    }
+
+    public void propagateLight() {
+        forEachChunk((_v, c) -> {
+            c.propagateLights();
+        });
     }
 }

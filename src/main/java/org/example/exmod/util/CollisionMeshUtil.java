@@ -5,7 +5,6 @@ import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.utils.Array;
 import com.github.puzzle.util.Vec3i;
 import com.jme3.bullet.collision.shapes.BoxCollisionShape;
-import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.collision.shapes.CompoundCollisionShape;
 import com.jme3.math.Vector3f;
 import finalforeach.cosmicreach.blocks.BlockState;
@@ -25,10 +24,9 @@ public class CollisionMeshUtil {
                     BlockState state = chunk.getBlockState(x, y, z);
                     if (!isCollideableState(state)) { continue; }
                     Vector3 pos2 = new Vector3(x, y, z);
-                    BoxCollisionShape boxShape = new BoxCollisionShape(new Vector3f(0.5f, 0.5f, 0.5f));
-                    mesh.addChildShape(boxShape, new Vector3f(globalX, globalY, globalZ));
-//                    CollisionShape blockCollisionShape = shapeFromBlockState(state);
-//                    mesh.addChildShape(blockCollisionShape, new Vector3f(globalX, y, globalZ));
+//                    BoxCollisionShape boxShape = new BoxCollisionShape(new Vector3f(0.5f, 0.5f, 0.5f));
+//                    mesh.addChildShape(boxShape, new Vector3f(globalX, globalY, globalZ));
+                    shapeFromBlockState(mesh, new Vector3f(globalX, globalY, globalZ), state);
                 }
             }
         }
@@ -47,10 +45,9 @@ public class CollisionMeshUtil {
                     BlockState state = chunk.getBlockState(x, y, z);
                     if (!isCollideableState(state)) continue;
                     Vector3 pos = new Vector3(x, y, z);
-                    BoxCollisionShape boxShape = new BoxCollisionShape(new Vector3f(0.5f, 0.5f, 0.5f));
-                    mesh.addChildShape(boxShape, new Vector3f(pos.x, pos.y, pos.z));
-//                    CollisionShape blockCollisionShape = shapeFromBlockState(state);
-//                    mesh.addChildShape(blockCollisionShape, new Vector3f(x, y, z));
+//                    BoxCollisionShape boxShape = new BoxCollisionShape(new Vector3f(0.5f, 0.5f, 0.5f));
+//                    mesh.addChildShape(boxShape, new Vector3f(pos.x, pos.y, pos.z));
+                    shapeFromBlockState(mesh, new Vector3f(x, y, z), state);
                 }
             }
         }
@@ -66,34 +63,31 @@ public class CollisionMeshUtil {
         return createPhysicsMesh(new CompoundCollisionShape(), chunk);
     }
 
-    public static CollisionShape shapeFromBlockState(BlockState state){
-        CompoundCollisionShape collisionShape = new CompoundCollisionShape();
-
+    public static void shapeFromBlockState(CompoundCollisionShape mesh, Vector3f vector3f, BlockState state){
         Array<BoundingBox> boundingBoxes = new Array<>();
         state.getAllBoundingBoxes(boundingBoxes, 0, 0, 0);
 
-        if (boundingBoxes.size == 1) return shapeFromAABB(boundingBoxes.get(0));
+        if (boundingBoxes.size == 1) {
+            mesh.addChildShape(shapeFromAABB(boundingBoxes.get(0)), vector3f);
+            return;
+        }
         while (!boundingBoxes.isEmpty()) {
             BoundingBox box = boundingBoxes.pop();
+            com.jme3.bounding.BoundingBox boundingBox = minMaxToExtents(box.min, box.max);
+            BoxCollisionShape shape = shapeFromAABB(box);
 
-            collisionShape.addChildShape(shapeFromAABB(box), new Vector3f(0, 0, 0));
+            mesh.addChildShape(shape, vector3f.add(new Vector3f(box.min.x, box.min.y, box.min.z)).subtract(0.5f, 0.5f, 0.5f).add(boundingBox.getExtent(new Vector3f())));
         }
-
-        return collisionShape;
     }
 
-    public static Vector3f minMaxToExtents(Vector3 min, Vector3 max) {
-        Vector3f extents = new Vector3f();
-        extents.x = (max.x - min.x) / 2;
-        extents.y = (max.y - min.y) / 2;
-        extents.z = (max.z - min.z) / 2;
-        return extents;
+    public static com.jme3.bounding.BoundingBox minMaxToExtents(Vector3 min, Vector3 max) {
+        return new com.jme3.bounding.BoundingBox(new Vector3f(min.x, min.y, min.z), new Vector3f(max.x, max.y, max.z));
     }
 
     public static BoxCollisionShape shapeFromAABB(BoundingBox bb) {
-        Vector3f extents = minMaxToExtents(bb.min, bb.max);
+        com.jme3.bounding.BoundingBox extents = minMaxToExtents(bb.min, bb.max);
 
-        return new BoxCollisionShape(extents);
+        return new BoxCollisionShape(extents.getExtent(new Vector3f()));
     }
 
     public static boolean isCollideableState(BlockState state) {

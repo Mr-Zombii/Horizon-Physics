@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.github.puzzle.util.Vec3i;
@@ -21,7 +22,6 @@ import finalforeach.cosmicreach.rendering.shaders.ChunkShader;
 import finalforeach.cosmicreach.rendering.shaders.GameShader;
 import finalforeach.cosmicreach.world.Sky;
 import org.example.exmod.ExampleMod;
-import org.example.exmod.entity.WorldCube;
 import org.example.exmod.world.StructureWorld;
 
 import java.util.HashMap;
@@ -38,6 +38,7 @@ public class MutliBlockMesh implements IEntityModelInstance {
 
     public MutliBlockMesh(StructureWorld world) {
         this.world = world;
+        world.propagateLight();
 
         world.forEachChunk((pos, chunk) -> {
             AtomicReference<Array<MeshData>> reference = new AtomicReference<>();
@@ -65,9 +66,20 @@ public class MutliBlockMesh implements IEntityModelInstance {
 
     }
 
+    Vector3 sunDirection = new Vector3();
+
+    Matrix4 rotTmp = new Matrix4();
+    Quaternion quaternion = new Quaternion();
+
     @Override
     public void render(Entity _entity, Camera camera, Matrix4 tmp) {
             if (this.meshPairs != null) {
+                rotTmp.idt();
+                rotTmp.set(tmp.getRotation(quaternion));
+                Sky.currentSky.getSunDirection(sunDirection);
+//                rotTmp.rotate(Vector3.Z, 180);
+                sunDirection.rot(rotTmp);
+
                 world.forEachChunk((pos, chunk) -> {
                     if (!chunk.needsRemeshing) {
                         if (chunk.needsToRebuildMesh) {
@@ -100,6 +112,7 @@ public class MutliBlockMesh implements IEntityModelInstance {
                                 this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
                                 this.shader.bindOptionalMatrix4("u_modelMat", tmp);
                                 this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
+                                this.shader.bindOptionalUniform3f("u_sunDirection", sunDirection);
 
                                 defaultMesh.getLeft().bind(this.shader.shader);
                                 defaultMesh.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
@@ -117,6 +130,8 @@ public class MutliBlockMesh implements IEntityModelInstance {
                                 this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
                                 this.shader.bindOptionalMatrix4("u_modelMat", tmp);
                                 this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
+                                if (shader instanceof ChunkShader)
+                                    this.shader.bindOptionalUniform3f("u_sunDirection", sunDirection);
 
                                 partialTransparent.getLeft().bind(this.shader.shader);
                                 partialTransparent.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
@@ -133,6 +148,8 @@ public class MutliBlockMesh implements IEntityModelInstance {
                                 this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
                                 this.shader.bindOptionalMatrix4("u_modelMat", tmp);
                                 this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
+                                this.shader.bindOptionalUniform3f("u_sunDirection", sunDirection);
+
                                 fullyTransparent.getLeft().bind(this.shader.shader);
                                 fullyTransparent.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
                                 fullyTransparent.getLeft().unbind(this.shader.shader);

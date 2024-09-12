@@ -3,7 +3,7 @@ package org.example.exmod.mixins;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.OrientedBoundingBox;
-import org.example.exmod.boundingBox.ExtendedBoundingBox;
+import org.example.exmod.bounds.ExtendedBoundingBox;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

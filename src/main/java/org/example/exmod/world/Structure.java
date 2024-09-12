@@ -19,11 +19,12 @@ public class Structure {
 
     final short version;
     final Identifier id;
-    final Vector3 chunkPos;
-    final Vector3 blockPos;
+    public final Vec3i chunkPos;
+    public final Vec3i blockPos;
 
     final List<String> palette;
     public StructureWorld parent;
+    public final Queue<BlockPos> lightsToPropagate;
 
     // int blocks
     // blocksIndex, chunk x y z, bp x y z
@@ -35,6 +36,7 @@ public class Structure {
 
     public Structure(
             short version,
+            Vec3i chunkPos,
             Identifier id
     ) {
         this.palette = new ArrayList<>(0);
@@ -45,8 +47,10 @@ public class Structure {
         this.positions = new short[16 * 16 * 16];
         this.blockLights = new short[16 * 16 * 16];
 
-        chunkPos = new Vector3(0, 0, 0);
-        blockPos = new Vector3(0, 0, 0);
+        this.chunkPos = chunkPos;
+        blockPos = new Vec3i(chunkPos.x() * 16, chunkPos.y() * 16, chunkPos.z() * 16);
+
+        lightsToPropagate = new Queue<>();
     }
 
     Structure(short version, String id, List<String> blocks, short[] positions) {
@@ -55,25 +59,13 @@ public class Structure {
         this.id = Identifier.fromString(id);
         this.positions = positions;
 
-        chunkPos = new Vector3(0, 0, 0);
-        blockPos = new Vector3(0, 0, 0);
-    }
-
-    public void setChunkPos(Vec3i pos) {
-        chunkPos.set(pos.x(), pos.y(), pos.z());
-        blockPos.set(pos.x() * 16, pos.y() * 16, pos.z() * 16);
+        chunkPos = null;
+        blockPos = null;
+        lightsToPropagate = new Queue<>();
     }
 
     public void setParentWorld(StructureWorld world) {
         this.parent = world;
-    }
-
-    public Vec3i getChunkPos() {
-        return new Vec3i((int) chunkPos.x, (int) chunkPos.y, (int) chunkPos.z);
-    }
-
-    public Vec3i getBlockPos() {
-        return new Vec3i((int) blockPos.x, (int) blockPos.y, (int) blockPos.z);
     }
 
     public void flagTouchingChunksForRemeshing(StructureWorld zone, int localX, int localY, int localZ, boolean updateImmediately) {
@@ -84,49 +76,49 @@ public class Structure {
             int dz = localZ == 0 ? -1 : (localZ == 15 ? 1 : 0);
             Structure nc;
             if (dx != 0) {
-                nc = zone.getChunkAtChunkCoords((int) (this.chunkPos.x + dx), (int) this.chunkPos.y, (int) this.chunkPos.z);
+                nc = zone.getChunkAtChunkCoords(this.chunkPos.x() + dx, this.chunkPos.y(), this.chunkPos.z());
                 if (nc != null) {
                     nc.flagForRemeshing(updateImmediately);
                 }
             }
 
             if (dy != 0) {
-                nc = zone.getChunkAtChunkCoords((int) this.chunkPos.x, (int) (this.chunkPos.y + dy), (int) this.chunkPos.z);
+                nc = zone.getChunkAtChunkCoords(this.chunkPos.x(), this.chunkPos.y() + dy, this.chunkPos.z());
                 if (nc != null) {
                     nc.flagForRemeshing(updateImmediately);
                 }
             }
 
             if (dz != 0) {
-                nc = zone.getChunkAtChunkCoords((int) this.chunkPos.x, (int) this.chunkPos.y, (int) (this.chunkPos.z + dz));
+                nc = zone.getChunkAtChunkCoords(this.chunkPos.x(), this.chunkPos.y(), this.chunkPos.z() + dz);
                 if (nc != null) {
                     nc.flagForRemeshing(updateImmediately);
                 }
             }
 
             if (dx != 0 && dy != 0) {
-                nc = zone.getChunkAtChunkCoords((int) (this.chunkPos.x + dx), (int) (this.chunkPos.y + dy), (int) this.chunkPos.z);
+                nc = zone.getChunkAtChunkCoords(this.chunkPos.x() + dx, this.chunkPos.y() + dy, this.chunkPos.z());
                 if (nc != null) {
                     nc.flagForRemeshing(updateImmediately);
                 }
             }
 
             if (dx != 0 && dz != 0) {
-                nc = zone.getChunkAtChunkCoords((int) (this.chunkPos.x + dx), (int) this.chunkPos.y, (int) (this.chunkPos.z + dz));
+                nc = zone.getChunkAtChunkCoords(this.chunkPos.x() + dx, this.chunkPos.y(), this.chunkPos.z() + dz);
                 if (nc != null) {
                     nc.flagForRemeshing(updateImmediately);
                 }
             }
 
             if (dy != 0 && dz != 0) {
-                nc = zone.getChunkAtChunkCoords((int) this.chunkPos.x, (int) (this.chunkPos.y + dy), (int) (this.chunkPos.z + dz));
+                nc = zone.getChunkAtChunkCoords(this.chunkPos.x(), this.chunkPos.y() + dy, this.chunkPos.z() + dz);
                 if (nc != null) {
                     nc.flagForRemeshing(updateImmediately);
                 }
             }
 
             if (dx != 0 && dy != 0 && dz != 0) {
-                nc = zone.getChunkAtChunkCoords((int) (this.chunkPos.x + dx), (int) (this.chunkPos.y + dy), (int) (this.chunkPos.z + dz));
+                nc = zone.getChunkAtChunkCoords(this.chunkPos.x() + dx, this.chunkPos.y() + dy, this.chunkPos.z() + dz);
                 if (nc != null) {
                     nc.flagForRemeshing(updateImmediately);
                 }
@@ -172,7 +164,13 @@ public class Structure {
                     state.lightLevelRed, state.lightLevelGreen, state.lightLevelBlue,
                     x, y, z
             );
+            lightsToPropagate.addLast(new BlockPos(this, x, y, z));
+//            BlockLightPropagator.propagateBlockLights(parent, queue);
         }
+    }
+
+    public void propagateLights() {
+        BlockLightPropagator.propagateBlockDarkness(parent, lightsToPropagate);
     }
 
     public void setBlockLight(int r, int g, int b, int x, int y, int z) {
@@ -180,8 +178,7 @@ public class Structure {
         blockLights[to1DCoords(x, y, z)] = blockLight;
 
         if (parent != null) {
-            Queue<BlockPos> queue = new Queue<>();
-            queue.addLast(new BlockPos(this, x, y, z));
+
 
 //            BlockLightPropagator.propagateBlockDarkness(parent, queue);
 //            BlockLightPropagator.propagateBlockLights(parent, queue);

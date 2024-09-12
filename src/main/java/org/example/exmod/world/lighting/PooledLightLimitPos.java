@@ -4,10 +4,10 @@ import com.badlogic.gdx.utils.Pool;
 import org.example.exmod.world.BlockPos;
 import org.example.exmod.world.Structure;
 
-class PooledLightLimitPosition extends PooledBlockPosition<PooledLightLimitPosition> {
+class PooledLightLimitPos extends PooledBlockPos<PooledLightLimitPos> {
     int lightLimit = 0;
 
-    public PooledLightLimitPosition(Pool<PooledLightLimitPosition> positionPool, Structure chunk, int localX, int localY, int localZ) {
+    public PooledLightLimitPos(Pool<PooledLightLimitPos> positionPool, Structure chunk, int localX, int localY, int localZ) {
         super(positionPool, chunk, localX, localY, localZ);
     }
 
@@ -17,7 +17,7 @@ class PooledLightLimitPosition extends PooledBlockPosition<PooledLightLimitPosit
     }
 
     public BlockPos set(BlockPos pos) {
-        if (pos instanceof PooledLightLimitPosition l) {
+        if (pos instanceof PooledLightLimitPos l) {
             this.lightLimit = l.lightLimit;
         } else {
             this.lightLimit = 0;

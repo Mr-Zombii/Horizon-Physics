@@ -26,7 +26,7 @@ public class BlockPos{
     }
 
     public short getBlockLight() {
-        System.out.println(x + " " + y + " " + z + " " + to1DCoords(x, y, z));
+//        System.out.println(x + " " + y + " " + z + " " + to1DCoords(x, y, z));
         return chunk.blockLights[to1DCoords(x, y, z)];
     }
 
@@ -77,17 +77,17 @@ public class BlockPos{
             int nLocalZ = this.z + offsetZ;
             Structure c = this.chunk;
             if (nLocalX < 0 || nLocalX >= 16 || nLocalY < 0 || nLocalY >= 16 || nLocalZ < 0 || nLocalZ >= 16) {
-                int nGlobalX = this.chunk.getBlockPos().x() + nLocalX;
-                int nGlobalY = this.chunk.getBlockPos().y() + nLocalY;
-                int nGlobalZ = this.chunk.getBlockPos().z() + nLocalZ;
+                int nGlobalX = this.chunk.blockPos.x() + nLocalX;
+                int nGlobalY = this.chunk.blockPos.y() + nLocalY;
+                int nGlobalZ = this.chunk.blockPos.z() + nLocalZ;
                 c = zone.getChunkAtBlock(nGlobalX, nGlobalY, nGlobalZ);
-                if (c == null) {
+                if (c == null || c == StructureWorld.emptyStructure) {
                     return null;
                 }
 
-                nLocalX = nGlobalX - c.getBlockPos().x();
-                nLocalY = nGlobalY - c.getBlockPos().y();
-                nLocalZ = nGlobalZ - c.getBlockPos().z();
+                nLocalX = nGlobalX - c.blockPos.x();
+                nLocalY = nGlobalY - c.blockPos.y();
+                nLocalZ = nGlobalZ - c.blockPos.z();
             }
 
             destBlockPos.set(c, nLocalX, nLocalY, nLocalZ);

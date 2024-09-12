@@ -1,23 +1,20 @@
 package org.example.exmod.mixins;
 
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
-import com.badlogic.gdx.math.collision.OrientedBoundingBox;
 import finalforeach.cosmicreach.entities.Entity;
 import finalforeach.cosmicreach.gamestates.InGame;
 import finalforeach.cosmicreach.world.Zone;
-import org.example.exmod.boundingBox.ExtendedBoundingBox;
+import org.example.exmod.bounds.ExtendedBoundingBox;
 import org.example.exmod.util.DebugRenderUtil;
+import org.example.exmod.util.InGameAccess;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(InGame.class)
-public class InGameMixin {
+public class InGameMixin implements InGameAccess {
 
     @Shadow private static ShapeRenderer sr;
 
@@ -40,16 +37,29 @@ public class InGameMixin {
         sr.begin(ShapeRenderer.ShapeType.Line);
 
         for(Entity e : playerZone.allEntities) {
-            e.getBoundingBox(bb);
+            try {
+                e.getBoundingBox(bb);
 
-            if (((ExtendedBoundingBox) bb).hasInnerBounds()) {
-                DebugRenderUtil.renderBoundingBox(sr, ((ExtendedBoundingBox) bb).getInnerBounds());
-            } else {
-                DebugRenderUtil.renderBoundingBox(sr, bb);
-            }
+                if (((ExtendedBoundingBox) bb).hasInnerBounds()) {
+                    DebugRenderUtil.renderBoundingBox(sr, ((ExtendedBoundingBox) bb).getInnerBounds());
+                } else {
+                    DebugRenderUtil.renderBoundingBox(sr, bb);
+                }
+            } catch (Exception ignore) {}
         }
 
         sr.end();
     }
 
+    @Override
+    public ShapeRenderer getShapeRenderer() {
+        if (sr != null) return sr;
+        sr = new ShapeRenderer();
+        return sr;
+    }
+
+    @Override
+    public PerspectiveCamera getRawWorldCamera() {
+        return rawWorldCamera;
+    }
 }
