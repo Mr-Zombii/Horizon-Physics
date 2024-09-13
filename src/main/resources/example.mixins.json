@@ -8,8 +8,10 @@
     "InGameMixin",
     "IntersectorMixin",
     "MainMenuMixin",
-    "PhysicsWorldMeshInvalidator",
-    "PlayerEntityMixin"
+    "PauseMenuMixin",
+    "CollisionMeshInvalidator",
+    "PlayerEntityMixin",
+    "ResumeToGameMixin"
   ],
   "client": [],
   "server": [],

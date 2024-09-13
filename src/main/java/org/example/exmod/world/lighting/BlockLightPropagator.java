@@ -4,13 +4,13 @@ import com.badlogic.gdx.utils.Queue;
 import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.constants.Direction;
 import org.example.exmod.world.BlockPos;
-import org.example.exmod.world.StructureWorld;
+import org.example.exmod.world.VirtualWorld;
 
 public class BlockLightPropagator {
     public BlockLightPropagator() {
     }
 
-    public static void propagateBlockDarkness(StructureWorld zone, Queue<BlockPos> darkQueue) {
+    public static void propagateBlockDarkness(VirtualWorld zone, Queue<BlockPos> darkQueue) {
         Queue<BlockPos> lightQueue = new Queue<>();
 
         int packedLight;
@@ -88,7 +88,7 @@ public class BlockLightPropagator {
 
     }
 
-    public static void propagateBlockLights(StructureWorld zone, Queue<BlockPos> lightQueue) {
+    public static void propagateBlockLights(VirtualWorld zone, Queue<BlockPos> lightQueue) {
         while(lightQueue.notEmpty()) {
             BlockPos position = lightQueue.removeFirst();
             int lpacked = position.getBlockLight();

@@ -9,11 +9,11 @@ import com.jme3.bullet.collision.shapes.CompoundCollisionShape;
 import com.jme3.math.Vector3f;
 import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.world.Chunk;
-import org.example.exmod.world.Structure;
+import org.example.exmod.world.VirtualChunk;
 
 public class CollisionMeshUtil {
 
-    public static CompoundCollisionShape createPhysicsMesh(CompoundCollisionShape mesh, Vec3i pos, Structure chunk) {
+    public static CompoundCollisionShape createPhysicsMesh(CompoundCollisionShape mesh, Vec3i pos, VirtualChunk chunk) {
         for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 16; y++) {
                 for (int z = 0; z < 16; z++) {
@@ -55,7 +55,7 @@ public class CollisionMeshUtil {
         return mesh;
     }
 
-    public static CompoundCollisionShape createPhysicsMesh(Vec3i pos, Structure chunk) {
+    public static CompoundCollisionShape createPhysicsMesh(Vec3i pos, VirtualChunk chunk) {
         return createPhysicsMesh(new CompoundCollisionShape(), pos, chunk);
     }
 

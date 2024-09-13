@@ -2,12 +2,12 @@ package org.example.exmod.world.lighting;
 
 import com.badlogic.gdx.utils.Pool;
 import org.example.exmod.world.BlockPos;
-import org.example.exmod.world.Structure;
+import org.example.exmod.world.VirtualChunk;
 
 class PooledLightLimitPos extends PooledBlockPos<PooledLightLimitPos> {
     int lightLimit = 0;
 
-    public PooledLightLimitPos(Pool<PooledLightLimitPos> positionPool, Structure chunk, int localX, int localY, int localZ) {
+    public PooledLightLimitPos(Pool<PooledLightLimitPos> positionPool, VirtualChunk chunk, int localX, int localY, int localZ) {
         super(positionPool, chunk, localX, localY, localZ);
     }
 

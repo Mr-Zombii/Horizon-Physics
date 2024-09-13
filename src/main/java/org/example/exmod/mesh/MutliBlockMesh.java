@@ -10,6 +10,7 @@ import com.badlogic.gdx.utils.Array;
 import com.github.puzzle.util.Vec3i;
 import com.llamalad7.mixinextras.lib.apache.commons.tuple.ImmutablePair;
 import com.llamalad7.mixinextras.lib.apache.commons.tuple.Pair;
+import finalforeach.cosmicreach.blocks.Block;
 import finalforeach.cosmicreach.entities.Entity;
 import finalforeach.cosmicreach.rendering.MeshData;
 import finalforeach.cosmicreach.rendering.SharedQuadIndexData;
@@ -21,8 +22,8 @@ import finalforeach.cosmicreach.rendering.meshes.GameMesh;
 import finalforeach.cosmicreach.rendering.shaders.ChunkShader;
 import finalforeach.cosmicreach.rendering.shaders.GameShader;
 import finalforeach.cosmicreach.world.Sky;
-import org.example.exmod.ExampleMod;
-import org.example.exmod.world.StructureWorld;
+import org.example.exmod.threading.MeshingThread;
+import org.example.exmod.world.VirtualWorld;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,18 +33,17 @@ public class MutliBlockMesh implements IEntityModelInstance {
 
     Map<Vec3i, Pair<GameMesh, GameShader>[]> meshPairs = new HashMap<>();
     GameShader shader;
-    StructureWorld world;
+    VirtualWorld world;
 
-    Map<Vec3i, AtomicReference<Array<MeshData>>> references = new HashMap<>();
+    Map<Vec3i, AtomicReference<Array<MeshData>>> refMap = new HashMap<>();
 
-    public MutliBlockMesh(StructureWorld world) {
+    public MutliBlockMesh(VirtualWorld world) {
         this.world = world;
         world.propagateLight();
 
         world.forEachChunk((pos, chunk) -> {
-            AtomicReference<Array<MeshData>> reference = new AtomicReference<>();
-            ExampleMod.thread.meshChunk(world, pos, chunk, reference);
-            references.put(pos, reference);
+            AtomicReference<Array<MeshData>> ref = MeshingThread.post(chunk);
+            refMap.put(pos, ref);
         });
 
         shader = ChunkShader.DEFAULT_BLOCK_SHADER;
@@ -73,121 +73,111 @@ public class MutliBlockMesh implements IEntityModelInstance {
 
     @Override
     public void render(Entity _entity, Camera camera, Matrix4 tmp) {
-            if (this.meshPairs != null) {
-                rotTmp.idt();
-                rotTmp.set(tmp.getRotation(quaternion));
-                Sky.currentSky.getSunDirection(sunDirection);
-//                rotTmp.rotate(Vector3.Z, 180);
-                sunDirection.rot(rotTmp);
+        if (refMap == null) return;
+        if (meshPairs == null) return;
 
-                world.forEachChunk((pos, chunk) -> {
-                    if (!chunk.needsRemeshing) {
-                        if (chunk.needsToRebuildMesh) {
-                            Array<MeshData> data = references.get(pos).get();
+        rotTmp.idt();
+        rotTmp.set(tmp.getRotation(new Quaternion()));
+        Sky.currentSky.getSunDirection(sunDirection);
+        sunDirection.rot(rotTmp);
 
-                            if (data != null && !data.isEmpty()) {
-                                MeshData[] meshData = sortData(data);
-                                Pair<GameMesh, GameShader>[] finalizedMeshes = finalizeMeshes(meshData);
-                                meshPairs.put(pos, finalizedMeshes);
-                            }
-                            chunk.needsToRebuildMesh = false;
-                            return;
-                        }
-                        Pair<GameMesh, GameShader>[] meshes = meshPairs.get(pos);
-                        if (meshes != null && meshes.length != 0) {
 
-//                        tmp.setFromEulerAngles(entity.rotation.x, entity.rotation.y, entity.rotation.z);
+        world.forEachChunk((pos, chunk) -> {
+            AtomicReference<Array<MeshData>> ref = refMap.get(pos);
 
-                            if (!BlockModelJson.useIndices) {
-                                SharedQuadIndexData.bind();
-                            }
+            if (chunk.isEntirely(Block.AIR.getDefaultBlockState()))
+                return;
+            if (!chunk.needsRemeshing) {
+                if (chunk.needsToRebuildMesh) {
+                    Array<MeshData> data = ref.get();
 
-                            Vector3 batchPos = new Vector3(pos.x() * 16, pos.y() * 16, pos.z() * 16);
-                            try {
-                                Pair<GameMesh, GameShader> defaultMesh = meshes[2];
-                                this.shader = defaultMesh.getRight();
-
-                                this.shader.bind(camera);
-                                this.shader.bindOptionalMatrix4("u_projViewTrans", camera.combined);
-                                this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
-                                this.shader.bindOptionalMatrix4("u_modelMat", tmp);
-                                this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
-                                this.shader.bindOptionalUniform3f("u_sunDirection", sunDirection);
-
-                                defaultMesh.getLeft().bind(this.shader.shader);
-                                defaultMesh.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
-                                defaultMesh.getLeft().unbind(this.shader.shader);
-
-                                this.shader.unbind();
-                            } catch (Exception ignore) {}
-
-                            try {
-                                Pair<GameMesh, GameShader> partialTransparent = meshes[1];
-
-                                this.shader = partialTransparent.getRight();
-                                this.shader.bind(camera);
-                                this.shader.bindOptionalMatrix4("u_projViewTrans", camera.combined);
-                                this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
-                                this.shader.bindOptionalMatrix4("u_modelMat", tmp);
-                                this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
-                                if (shader instanceof ChunkShader)
-                                    this.shader.bindOptionalUniform3f("u_sunDirection", sunDirection);
-
-                                partialTransparent.getLeft().bind(this.shader.shader);
-                                partialTransparent.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
-                                partialTransparent.getLeft().unbind(this.shader.shader);
-
-                                this.shader.unbind();
-                            } catch (Exception ignore) {}
-
-                            try {
-                                Pair<GameMesh, GameShader> fullyTransparent = meshes[0];
-                                this.shader = fullyTransparent.getRight();
-                                this.shader.bind(camera);
-                                this.shader.bindOptionalMatrix4("u_projViewTrans", camera.combined);
-                                this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
-                                this.shader.bindOptionalMatrix4("u_modelMat", tmp);
-                                this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
-                                this.shader.bindOptionalUniform3f("u_sunDirection", sunDirection);
-
-                                fullyTransparent.getLeft().bind(this.shader.shader);
-                                fullyTransparent.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
-                                fullyTransparent.getLeft().unbind(this.shader.shader);
-
-                                this.shader.unbind();
-                            } catch (Exception ignore) {}
-
-                            if (!BlockModelJson.useIndices) {
-                                SharedQuadIndexData.unbind();
-                            }
-
-                        } else {
-                            Array<MeshData> data = references.get(pos).get();
-
-                            if (data != null && !data.isEmpty()) {
-                                MeshData[] meshData = sortData(data);
-                                Pair<GameMesh, GameShader>[] finalizedMeshes = finalizeMeshes(meshData);
-                                meshPairs.put(pos, finalizedMeshes);
-//                        if (BlockModelJson.useIndices) {
-//                            meshes.put(pos, data.get(0).toIntIndexedMesh(true));
-//                            shader = data.get(0).shader;
-//                        } else {
-//                            meshes.put(pos, data.get(0).toSharedIndexMesh(true));
-//                            shader = data.get(0).shader;
-//                            if (meshes != null) {
-//                                int numIndices = (meshes.get(pos).getNumVertices() * 6) / 4;
-//                                SharedQuadIndexData.allowForNumIndices(numIndices, false);
-//                            }
-//                        }
-                            }
-                        }
-                    } else {
-                        ExampleMod.thread.meshChunk(world, pos, chunk, references.get(pos));
+                    if (data != null && !data.isEmpty()) {
+                        MeshData[] meshData = sortData(data);
+                        Pair<GameMesh, GameShader>[] finalizedMeshes = finalizeMeshes(meshData);
+                        meshPairs.put(pos, finalizedMeshes);
                     }
-                });
+                    chunk.needsToRebuildMesh = false;
+                    return;
+                }
+                Pair<GameMesh, GameShader>[] meshes = meshPairs.get(pos);
+                if (meshes != null && meshes.length != 0) {
 
-//                entity.rotation.z += 0.5f;
-        }
+                    if (!BlockModelJson.useIndices) {
+                        SharedQuadIndexData.bind();
+                    }
+
+                    Vector3 batchPos = new Vector3(pos.x() * 16, pos.y() * 16, pos.z() * 16);
+                    try {
+                        Pair<GameMesh, GameShader> defaultMesh = meshes[2];
+                        this.shader = defaultMesh.getRight();
+
+                        this.shader.bind(camera);
+                        this.shader.bindOptionalMatrix4("u_projViewTrans", camera.combined);
+                        this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
+                        this.shader.bindOptionalMatrix4("u_modelMat", tmp);
+                        this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
+                        this.shader.bindOptionalUniform3f("u_sunDirection", sunDirection);
+
+                        defaultMesh.getLeft().bind(this.shader.shader);
+                        defaultMesh.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
+                        defaultMesh.getLeft().unbind(this.shader.shader);
+
+                        this.shader.unbind();
+                    } catch (Exception ignore) {}
+
+                    try {
+                        Pair<GameMesh, GameShader> partialTransparent = meshes[1];
+
+                        this.shader = partialTransparent.getRight();
+                        this.shader.bind(camera);
+                        this.shader.bindOptionalMatrix4("u_projViewTrans", camera.combined);
+                        this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
+                        this.shader.bindOptionalMatrix4("u_modelMat", tmp);
+                        this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
+                        if (shader instanceof ChunkShader)
+                            this.shader.bindOptionalUniform3f("u_sunDirection", sunDirection);
+
+                        partialTransparent.getLeft().bind(this.shader.shader);
+                        partialTransparent.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
+                        partialTransparent.getLeft().unbind(this.shader.shader);
+
+                        this.shader.unbind();
+                    } catch (Exception ignore) {}
+
+                    try {
+                        Pair<GameMesh, GameShader> fullyTransparent = meshes[0];
+                        this.shader = fullyTransparent.getRight();
+                        this.shader.bind(camera);
+                        this.shader.bindOptionalMatrix4("u_projViewTrans", camera.combined);
+                        this.shader.bindOptionalUniform4f("tintColor", Sky.currentSky.currentAmbientColor.cpy());
+                        this.shader.bindOptionalMatrix4("u_modelMat", tmp);
+                        this.shader.bindOptionalUniform3f("u_batchPosition", batchPos);
+                        this.shader.bindOptionalUniform3f("u_sunDirection", sunDirection);
+
+                        fullyTransparent.getLeft().bind(this.shader.shader);
+                        fullyTransparent.getLeft().render(this.shader.shader, GL20.GL_TRIANGLES);
+                        fullyTransparent.getLeft().unbind(this.shader.shader);
+
+                        this.shader.unbind();
+                    } catch (Exception ignore) {}
+
+                    if (!BlockModelJson.useIndices) {
+                        SharedQuadIndexData.unbind();
+                    }
+
+                } else {
+                    Array<MeshData> data = refMap.get(pos).get();
+
+                    if (data != null && !data.isEmpty()) {
+                        MeshData[] meshData = sortData(data);
+                        Pair<GameMesh, GameShader>[] finalizedMeshes = finalizeMeshes(meshData);
+                        meshPairs.put(pos, finalizedMeshes);
+                    }
+                }
+            } else {
+                MeshingThread.post(refMap.get(pos), chunk);
+            }
+        });
     }
 
 

@@ -4,7 +4,7 @@ import com.badlogic.gdx.math.Vector3;
 import finalforeach.cosmicreach.entities.Entity;
 import finalforeach.cosmicreach.entities.player.PlayerEntity;
 import finalforeach.cosmicreach.world.Zone;
-import org.example.exmod.world.physics.PhysicsWorld;
+import org.example.exmod.threading.PhysicsThread;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(PlayerEntity.class)
@@ -12,7 +12,6 @@ public class PlayerEntityMixin extends Entity {
 
     @Override
     public void update(Zone zone, double delta) {
-        PhysicsWorld.tick(delta);
 //        PhysicsWorld.alertChunk(zone, currentChunk);
         super.update(zone, delta);
     }

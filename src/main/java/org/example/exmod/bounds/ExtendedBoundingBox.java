@@ -7,7 +7,5 @@ public interface ExtendedBoundingBox {
     boolean hasInnerBounds();
     OrientedBoundingBox getInnerBounds();
     void setInnerBounds(OrientedBoundingBox boundingBox);
-    boolean shouldCollideWith();
-    void shouldCollideWith(boolean b);
 
 }

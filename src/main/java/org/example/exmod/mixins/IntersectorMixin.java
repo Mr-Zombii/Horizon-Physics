@@ -25,7 +25,7 @@ public abstract class IntersectorMixin {
     @Shadow @Final private static Vector3 v2;
 
     @Unique
-    private static boolean intersectRayBounds(Ray ray, BoundingBox box, Vector3 intersection) {
+    private static boolean horizonPhysics$intersectRayBounds(Ray ray, BoundingBox box, Vector3 intersection) {
         if (box.contains(ray.origin)) {
             if (intersection != null) {
                 intersection.set(ray.origin);
@@ -131,9 +131,10 @@ public abstract class IntersectorMixin {
     private static void intersectRayBounds0(Ray ray, BoundingBox box, Vector3 intersection, CallbackInfoReturnable<Boolean> cir) {
         if (((ExtendedBoundingBox) box).hasInnerBounds()) {
             cir.setReturnValue(intersectRayOrientedBounds(ray, ((ExtendedBoundingBox) box).getInnerBounds(), intersection));
+            ((ExtendedBoundingBox) box).setInnerBounds(null);
             return;
         }
-        cir.setReturnValue(intersectRayBounds(ray, box, intersection));
+        cir.setReturnValue(horizonPhysics$intersectRayBounds(ray, box, intersection));
     }
 
 }

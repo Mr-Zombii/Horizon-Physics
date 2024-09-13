@@ -20,8 +20,8 @@ import finalforeach.cosmicreach.settings.ControlSettings;
 import finalforeach.cosmicreach.world.BlockSetter;
 import org.example.exmod.Constants;
 import org.example.exmod.entity.WorldCube;
-import org.example.exmod.world.Structure;
-import org.example.exmod.world.StructureWorld;
+import org.example.exmod.world.VirtualChunk;
+import org.example.exmod.world.VirtualWorld;
 import org.example.exmod.util.SchematicConverter;
 
 public class MoonScepter implements IModItem {
@@ -74,7 +74,7 @@ public class MoonScepter implements IModItem {
                 setBlockPos(player);
             }
             case CONVERT -> {
-                StructureWorld world = SchematicConverter.structureMapFromSchematic(BuilderWand.clipBoard);
+                VirtualWorld world = SchematicConverter.structureMapFromSchematic(BuilderWand.clipBoard);
                 Entity e = new WorldCube(world);
 
                 e.setPosition(player.getPosition());
@@ -112,8 +112,8 @@ public class MoonScepter implements IModItem {
 
         Queue<BlockPosition> positions = new Queue<>();
 
-        StructureWorld world = new StructureWorld();
-        Structure structure = new Structure((short) 0, new Vec3i(0, 0, 0), new Identifier(Constants.MOD_ID, "ea"));
+        VirtualWorld world = new VirtualWorld();
+        VirtualChunk structure = new VirtualChunk((short) 0, new Vec3i(0, 0, 0), new Identifier(Constants.MOD_ID, "ea"));
         for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 16; y++) {
                 for (int z = 0; z < 16; z++) {

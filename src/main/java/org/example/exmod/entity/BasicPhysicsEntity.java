@@ -17,7 +17,6 @@ import finalforeach.cosmicreach.TickRunner;
 import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.entities.Entity;
 import finalforeach.cosmicreach.gamestates.GameState;
-import finalforeach.cosmicreach.gamestates.InGame;
 import finalforeach.cosmicreach.io.CRBinDeserializer;
 import finalforeach.cosmicreach.io.CRBinSerializer;
 import finalforeach.cosmicreach.world.Zone;
@@ -25,12 +24,10 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.example.exmod.Constants;
 import org.example.exmod.bounds.ExtendedBoundingBox;
 import org.example.exmod.mesh.MutliBlockMesh;
-import org.example.exmod.util.DebugRenderUtil;
-import org.example.exmod.util.InGameAccess;
+import org.example.exmod.threading.PhysicsThread;
 import org.example.exmod.util.MatrixUtil;
-import org.example.exmod.world.Structure;
-import org.example.exmod.world.StructureWorld;
-import org.example.exmod.world.physics.PhysicsWorld;
+import org.example.exmod.world.VirtualChunk;
+import org.example.exmod.world.VirtualWorld;
 
 import java.util.UUID;
 
@@ -42,7 +39,7 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
     UUID uuid;
     float mass = 5;
 
-    public StructureWorld world;
+    public VirtualWorld world;
 
     public Matrix4 transform = new Matrix4();
 
@@ -52,14 +49,14 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
         if (rotation == null) rotation = new Quaternion(0, 0, 0, 0);
         if (uuid == null) uuid = UUID.randomUUID();
 
-        world = new StructureWorld();
-        Structure structure00 = new Structure((short) 0, new Vec3i(0, 0, 0), new Identifier("e", "E"));
+        world = new VirtualWorld();
+        VirtualChunk structure00 = new VirtualChunk((short) 0, new Vec3i(0, 0, 0), new Identifier("e", "E"));
         structure00.setParentWorld(world);
-        Structure structure01 = new Structure((short) 0, new Vec3i(-1, 0, 0), new Identifier("e", "E"));
+        VirtualChunk structure01 = new VirtualChunk((short) 0, new Vec3i(-1, 0, 0), new Identifier("e", "E"));
         structure01.setParentWorld(world);
-        Structure structure10 = new Structure((short) 0, new Vec3i(0, 0, -1), new Identifier("e", "E"));
+        VirtualChunk structure10 = new VirtualChunk((short) 0, new Vec3i(0, 0, -1), new Identifier("e", "E"));
         structure10.setParentWorld(world);
-        Structure structure11 = new Structure((short) 0, new Vec3i(-1, 0, -1), new Identifier("e", "E"));
+        VirtualChunk structure11 = new VirtualChunk((short) 0, new Vec3i(-1, 0, -1), new Identifier("e", "E"));
         structure11.setParentWorld(world);
 
         BlockState stone = BlockState.getInstance("base:stone_basalt[default]");
@@ -101,33 +98,34 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
 
     @Override
     protected void onDeath(Zone zone) {
-        PhysicsWorld.removeEntity(this);
+        PhysicsThread.removeEntity(this);
         super.onDeath(zone);
     }
 
     @Override
     public void hit(float amount) {
-//        body.activate(true);
-//        PerspectiveCamera cam = Reflection.getFieldContents(GameState.IN_GAME, "rawWorldCamera");
-//        body.setLinearVelocity(new Vector3f(cam.direction.cpy().scl(12).x, cam.direction.cpy().scl(12).y, cam.direction.cpy().scl(12).z));
+        body.activate(true);
+        PerspectiveCamera cam = Reflection.getFieldContents(GameState.IN_GAME, "rawWorldCamera");
+        body.setLinearVelocity(new Vector3f(cam.direction.cpy().scl(12).x, cam.direction.cpy().scl(12).y, cam.direction.cpy().scl(12).z));
     }
 
     @Override
     public void update(Zone zone, double deltaTime) {
-        PhysicsWorld.alertChunk(zone, zone.getChunkAtPosition(position));
+        if (!PhysicsThread.INSTANCE.shouldRun) return;
+        PhysicsThread.alertChunk(zone.getChunkAtPosition(position));
         MatrixUtil.rotateAroundOrigin3(oBoundingBox, transform, position, rotation);
 
         oBoundingBox.setBounds(world.AABB);
         oBoundingBox.setTransform(transform);
 
         if (!hasInit) {
-            PhysicsWorld.alertChunk(zone, zone.getChunkAtPosition(position));
+            PhysicsThread.alertChunk(zone.getChunkAtPosition(position));
             body.setPhysicsLocation(new Vector3f(position.x, position.y, position.z));
             body.setMass(5);
             hasInit = true;
 
 
-            PhysicsWorld.addEntity(this);
+            PhysicsThread.addEntity(this);
             body.activate(true);
         } else {
             Vector3f vector3f = body.getPhysicsLocation(new Vector3f());
@@ -187,14 +185,13 @@ public class BasicPhysicsEntity extends Entity implements IPhysicEntity {
 
     @Override
     public void render(Camera worldCamera) {
-        DebugRenderUtil.renderRigidBody(((InGameAccess) InGame.IN_GAME).getShapeRenderer(), position, body);
-
+//        DebugRenderUtil.renderRigidBody(((InGameAccess) InGame.IN_GAME).getShapeRenderer(), position, body);
         tmpRenderPos.set(this.lastRenderPosition);
         TickRunner.INSTANCE.partTickLerp(tmpRenderPos, this.position);
         this.lastRenderPosition.set(tmpRenderPos);
         if (worldCamera.frustum.boundsInFrustum(this.globalBoundingBox)) {
             tmpModelMatrix.idt();
-            MatrixUtil.rotateAroundOrigin3(oBoundingBox, tmpModelMatrix, position, rotation);
+            MatrixUtil.rotateAroundOrigin3(oBoundingBox, tmpModelMatrix, tmpRenderPos, rotation);
             if (modelInstance != null) {
                 modelInstance.render(this, worldCamera, tmpModelMatrix);
             }

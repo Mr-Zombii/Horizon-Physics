@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(BoundingBox.class)
 public abstract class BoundingBoxMixin implements ExtendedBoundingBox {
 
-    private boolean shouldCollideWith = true;
     @Shadow @Final public Vector3 min;
     @Shadow @Final public Vector3 max;
 
@@ -21,11 +20,12 @@ public abstract class BoundingBoxMixin implements ExtendedBoundingBox {
     @Unique
     OrientedBoundingBox exampleMod$innerBoundingBox;
 
-    @Inject(method = "set(Lcom/badlogic/gdx/math/collision/BoundingBox;)Lcom/badlogic/gdx/math/collision/BoundingBox;", at = @At("HEAD"))
+    @Inject(method = "set(Lcom/badlogic/gdx/math/collision/BoundingBox;)Lcom/badlogic/gdx/math/collision/BoundingBox;", at = @At("HEAD"), cancellable = true)
     public void set0(BoundingBox bounds, CallbackInfoReturnable<BoundingBox> cir) {
         if (((ExtendedBoundingBox)bounds).hasInnerBounds()) {
             exampleMod$innerBoundingBox = ((ExtendedBoundingBox)bounds).getInnerBounds();
         } else exampleMod$innerBoundingBox = null;
+        cir.setReturnValue(this.set(bounds.min, bounds.max));
     }
 
     @Override
@@ -41,16 +41,6 @@ public abstract class BoundingBoxMixin implements ExtendedBoundingBox {
     @Override
     public void setInnerBounds(OrientedBoundingBox boundingBox) {
         exampleMod$innerBoundingBox = boundingBox;
-    }
-
-    @Override
-    public boolean shouldCollideWith() {
-        return shouldCollideWith;
-    }
-
-    @Override
-    public void shouldCollideWith(boolean b) {
-        this.shouldCollideWith = b;
     }
 
     /**

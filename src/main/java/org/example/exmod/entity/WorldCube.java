@@ -15,7 +15,6 @@ import finalforeach.cosmicreach.Threads;
 import finalforeach.cosmicreach.TickRunner;
 import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.entities.Entity;
-import finalforeach.cosmicreach.gamestates.InGame;
 import finalforeach.cosmicreach.io.CRBinDeserializer;
 import finalforeach.cosmicreach.io.CRBinSerializer;
 import finalforeach.cosmicreach.world.Zone;
@@ -24,12 +23,10 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.example.exmod.Constants;
 import org.example.exmod.bounds.ExtendedBoundingBox;
 import org.example.exmod.mesh.MutliBlockMesh;
-import org.example.exmod.util.DebugRenderUtil;
-import org.example.exmod.util.InGameAccess;
-import org.example.exmod.world.Structure;
-import org.example.exmod.world.StructureWorld;
+import org.example.exmod.threading.PhysicsThread;
+import org.example.exmod.world.VirtualChunk;
+import org.example.exmod.world.VirtualWorld;
 import org.example.exmod.util.MatrixUtil;
-import org.example.exmod.world.physics.PhysicsWorld;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -38,7 +35,7 @@ import java.util.function.Supplier;
 
 public class WorldCube extends Entity implements IPhysicEntity {
 
-    public StructureWorld world;
+    public VirtualWorld world;
     public PhysicsRigidBody rigidBody;
 
     static SimplexNoise noise = new SimplexNoise(345324532);
@@ -48,7 +45,7 @@ public class WorldCube extends Entity implements IPhysicEntity {
 
     public UUID uuid;
 
-    public void generateChunk(Structure structure, Vec3i vec3i) {
+    public void generateChunk(VirtualChunk structure, Vec3i vec3i) {
         BlockState air = BlockState.getInstance("base:air[default]");
         BlockState stoneBlock = BlockState.getInstance("base:stone_basalt[default]");
 //        BlockState waterBlock = BlockState.getInstance("base:water[default]");
@@ -83,7 +80,7 @@ public class WorldCube extends Entity implements IPhysicEntity {
 
     public OrientedBoundingBox oBoundingBox = new OrientedBoundingBox();
 
-    public WorldCube(StructureWorld world) {
+    public WorldCube(VirtualWorld world) {
         super(new Identifier(Constants.MOD_ID, "entity").toString());
         this.world = world;
         uuid = UUID.randomUUID();
@@ -101,13 +98,13 @@ public class WorldCube extends Entity implements IPhysicEntity {
         if (uuid == null)
             uuid = UUID.randomUUID();
 
-        world = new StructureWorld();
+        world = new VirtualWorld();
         for (int x = -2; x < 2; x++) {
             for (int y = 0; y < 7; y++) {
                 for (int z = -2; z < 2; z++) {
                     Vec3i vec3i = new Vec3i(x, y, z);
 
-                    Structure structure = new Structure(
+                    VirtualChunk structure = new VirtualChunk(
                             (short) 0,
                             new Vec3i(x, y, z),
                             new Identifier("base", "test")
@@ -135,7 +132,7 @@ public class WorldCube extends Entity implements IPhysicEntity {
         this.lastRenderPosition.set(tmpRenderPos);
         if (worldCamera.frustum.boundsInFrustum(this.globalBoundingBox)) {
             tmpModelMatrix.idt();
-            MatrixUtil.rotateAroundOrigin2(oBoundingBox, tmpModelMatrix, position, rotation);
+            MatrixUtil.rotateAroundOrigin2(oBoundingBox, tmpModelMatrix, tmpRenderPos, rotation);
             if (modelInstance != null) {
                 modelInstance.render(this, worldCamera, tmpModelMatrix);
             }
@@ -144,7 +141,7 @@ public class WorldCube extends Entity implements IPhysicEntity {
 
     @Override
     public void update(Zone zone, double deltaTime) {
-        PhysicsWorld.alertChunk(zone, zone.getChunkAtPosition(position));
+        PhysicsThread.alertChunk(zone.getChunkAtPosition(position));
         MatrixUtil.rotateAroundOrigin2(oBoundingBox, transform, position, rotation);
 
         oBoundingBox.setBounds(world.AABB);
@@ -155,7 +152,7 @@ public class WorldCube extends Entity implements IPhysicEntity {
             rigidBody.setPhysicsRotation(getEularRotation());
             rigidBody.setPhysicsLocation(new Vector3f(position.x, position.y, position.z));
             rigidBody.setMass(0);
-            PhysicsWorld.addEntity(this);
+            PhysicsThread.addEntity(this);
         }
 
         getBoundingBox(globalBoundingBox);

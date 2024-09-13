@@ -1,5 +1,6 @@
 package org.example.exmod;
 
+import com.badlogic.gdx.utils.ObjectMap;
 import com.github.puzzle.core.PuzzleRegistries;
 import com.github.puzzle.core.localization.ILanguageFile;
 import com.github.puzzle.core.localization.LanguageManager;
@@ -17,8 +18,8 @@ import org.example.exmod.entity.BasicPhysicsEntity;
 import org.example.exmod.entity.BasicShipEntity;
 import org.example.exmod.entity.WorldCube;
 import org.example.exmod.items.MoonScepter;
-import org.example.exmod.mesh.LoneThread;
-import org.example.exmod.util.NativeLibraryLoader;
+import org.example.exmod.threading.MeshingThread;
+import org.example.exmod.threading.PhysicsThread;
 import org.example.exmod.worldgen.SuperFlat;
 import org.greenrobot.eventbus.Subscribe;
 
@@ -26,10 +27,11 @@ import java.io.IOException;
 
 public class ExampleMod implements ModInitializer {
 
-    public static LoneThread thread = new LoneThread();
-
     @Override
     public void onInit() {
+        MeshingThread.init();
+        PhysicsThread.init();
+
         PuzzleRegistries.EVENT_BUS.register(this);
         Commands.register();
 
@@ -42,11 +44,6 @@ public class ExampleMod implements ModInitializer {
         EntityCreator.registerEntityCreator(Constants.MOD_ID + ":ship", BasicShipEntity::new);
 
         IModItem.registerItem(new MoonScepter());
-
-        boolean success = NativeLibraryLoader.loadLibbulletjme("Release", "Sp");
-        if (!success) {
-            throw new RuntimeException("Failed to load native library. Please contact nab138, he may need to add support for your platform.");
-        }
     }
 
     @Subscribe

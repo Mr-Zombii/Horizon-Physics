@@ -4,17 +4,17 @@ import com.badlogic.gdx.utils.Pool;
 import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.constants.Direction;
 
-import static org.example.exmod.world.Structure.to1DCoords;
+import static org.example.exmod.world.VirtualChunk.to1DCoords;
 
 public class BlockPos{
 
-    public Structure chunk;
+    public VirtualChunk chunk;
     public int x;
     public int y;
     public int z;
 
     public BlockPos(
-            Structure chunk,
+            VirtualChunk chunk,
             int x,
             int y,
             int z
@@ -34,7 +34,7 @@ public class BlockPos{
         chunk.blockLights[to1DCoords(x, y, z)] = light;
     }
 
-    public void flagTouchingChunksForRemeshing(StructureWorld zone, boolean updateImmediately) {
+    public void flagTouchingChunksForRemeshing(VirtualWorld zone, boolean updateImmediately) {
         this.chunk.flagTouchingChunksForRemeshing(zone, this.x, this.y, this.z, updateImmediately);
     }
 
@@ -46,7 +46,7 @@ public class BlockPos{
         return chunk.getBlockState(x, y, z);
     }
 
-    public BlockPos set(Structure chunk, int localX, int localY, int localZ) {
+    public BlockPos set(VirtualChunk chunk, int localX, int localY, int localZ) {
         this.chunk = chunk;
         this.x = localX;
         this.y = localY;
@@ -59,15 +59,15 @@ public class BlockPos{
         return this;
     }
 
-    public BlockPos getOffsetBlockPos(Pool<BlockPos> pool, StructureWorld zone, int offsetX, int offsetY, int offsetZ) {
+    public BlockPos getOffsetBlockPos(Pool<BlockPos> pool, VirtualWorld zone, int offsetX, int offsetY, int offsetZ) {
         return this.getOffsetBlockPos(pool.obtain(), zone, offsetX, offsetY, offsetZ);
     }
 
-    public BlockPos getOffsetBlockPos(StructureWorld zone, int offsetX, int offsetY, int offsetZ) {
+    public BlockPos getOffsetBlockPos(VirtualWorld zone, int offsetX, int offsetY, int offsetZ) {
         return this.getOffsetBlockPos(new BlockPos(null, 0, 0, 0), zone, offsetX, offsetY, offsetZ);
     }
 
-    public BlockPos getOffsetBlockPos(BlockPos destBlockPos, StructureWorld zone, int offsetX, int offsetY, int offsetZ) {
+    public BlockPos getOffsetBlockPos(BlockPos destBlockPos, VirtualWorld zone, int offsetX, int offsetY, int offsetZ) {
         if (offsetX == 0 && offsetY == 0 && offsetZ == 0) {
             destBlockPos.set(this);
             return destBlockPos;
@@ -75,13 +75,13 @@ public class BlockPos{
             int nLocalX = this.x + offsetX;
             int nLocalY = this.y + offsetY;
             int nLocalZ = this.z + offsetZ;
-            Structure c = this.chunk;
+            VirtualChunk c = this.chunk;
             if (nLocalX < 0 || nLocalX >= 16 || nLocalY < 0 || nLocalY >= 16 || nLocalZ < 0 || nLocalZ >= 16) {
                 int nGlobalX = this.chunk.blockPos.x() + nLocalX;
                 int nGlobalY = this.chunk.blockPos.y() + nLocalY;
                 int nGlobalZ = this.chunk.blockPos.z() + nLocalZ;
                 c = zone.getChunkAtBlock(nGlobalX, nGlobalY, nGlobalZ);
-                if (c == null || c == StructureWorld.emptyStructure) {
+                if (c == null || c == VirtualWorld.emptyStructure) {
                     return null;
                 }
 
@@ -95,11 +95,11 @@ public class BlockPos{
         }
     }
 
-    public BlockPos getOffsetBlockPos(StructureWorld zone, Direction d) {
+    public BlockPos getOffsetBlockPos(VirtualWorld zone, Direction d) {
         return this.getOffsetBlockPos(zone, d.getXOffset(), d.getYOffset(), d.getZOffset());
     }
 
-    public BlockPos getOffsetBlockPos(BlockPos destBlockPos, StructureWorld zone, Direction d) {
+    public BlockPos getOffsetBlockPos(BlockPos destBlockPos, VirtualWorld zone, Direction d) {
         return this.getOffsetBlockPos(destBlockPos, zone, d.getXOffset(), d.getYOffset(), d.getZOffset());
     }
 

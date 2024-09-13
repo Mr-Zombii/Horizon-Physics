@@ -5,13 +5,19 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import finalforeach.cosmicreach.entities.Entity;
 import finalforeach.cosmicreach.gamestates.InGame;
+import finalforeach.cosmicreach.world.World;
 import finalforeach.cosmicreach.world.Zone;
 import org.example.exmod.bounds.ExtendedBoundingBox;
+import org.example.exmod.threading.PhysicsThread;
+import org.example.exmod.threading.ThreadHelper;
 import org.example.exmod.util.DebugRenderUtil;
 import org.example.exmod.util.InGameAccess;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(InGame.class)
 public class InGameMixin implements InGameAccess {
@@ -62,4 +68,25 @@ public class InGameMixin implements InGameAccess {
     public PerspectiveCamera getRawWorldCamera() {
         return rawWorldCamera;
     }
+
+    @Inject(method = "unloadWorld", at = @At("HEAD"))
+    private void exitWorld(CallbackInfo ci) {
+        PhysicsThread.clear();
+    }
+
+    @Inject(method = "loadWorld(Lfinalforeach/cosmicreach/world/World;)V", at = @At("HEAD"))
+    private void joinWorld(World world, CallbackInfo ci) {
+        PhysicsThread.start();
+    }
+
+    @Inject(method = "dispose", at = @At(value = "INVOKE", target = "Lfinalforeach/cosmicreach/gamestates/InGame;unloadWorld()V", shift = At.Shift.AFTER))
+    private void dispose(CallbackInfo ci) {
+        ThreadHelper.killAll();
+    }
+
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lfinalforeach/cosmicreach/gamestates/InGame;switchToGameState(Lfinalforeach/cosmicreach/gamestates/GameState;)V", ordinal = 0, shift = At.Shift.BEFORE))
+    private void pause(CallbackInfo ci) {
+        PhysicsThread.pause();
+    }
+
 }
