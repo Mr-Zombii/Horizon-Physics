@@ -10,19 +10,16 @@
     "icon": "assets/horizon_physics/icons/icon.png"
   },
   "entrypoints": {
-    "preInit": [
-      "org.example.exmod.ExampleModPreinit"
-    ],
     "init": [
-      "org.example.exmod.ExampleMod"
+      "me.zombii.horizon.Horizon"
     ]
   },
   "mixins": [
-    "example.mixins.json"
+    "horizon.mixins.json"
   ],
   "dependencies": {
     "cosmic-reach": ">=0.1.50",
-    "puzzle-loader": ">=1.5.2"
+    "puzzle-loader": ">=1.5.5"
   },
-  "accessManipulator": "example_mod.manipulator"
+  "accessManipulator": "horizon.manipulator"
 }
