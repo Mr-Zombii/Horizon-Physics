@@ -1,5 +1,6 @@
 package me.zombii.horizon.model;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g3d.Model;
@@ -50,11 +51,11 @@ public class BasicModelInstance implements IEntityModelInstance {
 
     @Override
     public void render(Entity entity, Camera camera, Matrix4 matrix4) {
-        GL20.glDepthFunc(GL11.GL_ALWAYS);
+        Gdx.gl.glDepthFunc(GL11.GL_ALWAYS);
 //        batch.begin(camera);
 //        batch.render(instance);
 //        batch.end();
-        GL20.glDepthFunc(GL20.GL_LESS);
+        Gdx.gl.glDepthFunc(GL20.GL_LESS);
     }
 
     @Override
