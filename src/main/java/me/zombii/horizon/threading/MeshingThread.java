@@ -91,18 +91,18 @@ public class MeshingThread implements Runnable {
     private VirtualChunkMeshMeta buildChunkMeshMeta(VirtualChunkMeshMeta meta, Array<MeshData> data) {
         for (int i = 0; i < data.size; i++) {
             MeshData meshData = data.get(i);
-            switch (data.get(i).renderOrder) {
+            switch (data.get(i).getRenderOrder()) {
                 case FULLY_TRANSPARENT -> {
                     meta.transparentLayerMesh = buildMesh(meshData);
-                    meta.transparentLayerShader = meshData.shader;
+                    meta.transparentLayerShader = meshData.getShader();
                 }
                 case PARTLY_TRANSPARENT -> {
                     meta.semiTransparentLayerMesh = buildMesh(meshData);
-                    meta.semiTransparentLayerShader = meshData.shader;
+                    meta.semiTransparentLayerShader = meshData.getShader();
                 }
                 case DEFAULT -> {
                     meta.defaultLayerMesh = buildMesh(meshData);
-                    meta.defaultLayerShader = meshData.shader;
+                    meta.defaultLayerShader = meshData.getShader();
                 }
             }
         }

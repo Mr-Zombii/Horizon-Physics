@@ -1,6 +1,5 @@
 package me.zombii.horizon.threading;
 
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.PauseableThread;
@@ -15,7 +14,8 @@ import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.entities.Entity;
 import finalforeach.cosmicreach.savelib.blockdata.IBlockData;
 import finalforeach.cosmicreach.world.Chunk;
-import me.zombii.horizon.entity.IPhysicEntity;
+import me.zombii.horizon.entity.api.IPhysicEntity;
+import me.zombii.horizon.entity.api.ISingleEntityBlock;
 import me.zombii.horizon.util.ConversionUtil;
 import me.zombii.horizon.util.NativeLibraryLoader;
 import me.zombii.horizon.world.VirtualChunk;
@@ -104,7 +104,7 @@ public class PhysicsThread implements TickingRunnable {
         }
     }
 
-    public static <T extends Entity & IPhysicEntity> T addEntity(T entity) {
+    public static IPhysicEntity addEntity(IPhysicEntity entity) {
         allEntities.put(entity.getUUID(), entity);
         allEntitiesByBody.put(entity.getBody(), entity);
         addPhysicsBody(entity.getBody());
@@ -250,7 +250,7 @@ public class PhysicsThread implements TickingRunnable {
 
     // Collision Mesh Util
 
-    CompoundCollisionShape createPhysicsMesh(CompoundCollisionShape mesh, VirtualChunk chunk) {
+    public CompoundCollisionShape createPhysicsMesh(CompoundCollisionShape mesh, VirtualChunk chunk) {
         for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 16; y++) {
                 for (int z = 0; z < 16; z++) {
@@ -268,7 +268,7 @@ public class PhysicsThread implements TickingRunnable {
         return mesh;
     }
 
-    CompoundCollisionShape createPhysicsMesh(CompoundCollisionShape mesh, Chunk chunk) {
+    public CompoundCollisionShape createPhysicsMesh(CompoundCollisionShape mesh, Chunk chunk) {
         for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 16; y++) {
                 for (int z = 0; z < 16; z++) {
@@ -286,22 +286,22 @@ public class PhysicsThread implements TickingRunnable {
         return mesh;
     }
 
-    CompoundCollisionShape createPhysicsMesh(VirtualChunk chunk) {
+    public CompoundCollisionShape createPhysicsMesh(VirtualChunk chunk) {
         return createPhysicsMesh(new CompoundCollisionShape(), chunk);
     }
 
-    CompoundCollisionShape createPhysicsMesh(Chunk chunk) {
+    public CompoundCollisionShape createPhysicsMesh(Chunk chunk) {
         return createPhysicsMesh(new CompoundCollisionShape(), chunk);
     }
 
-    void shapeFromBlockState(CompoundCollisionShape mesh, Vector3f vector3f, BlockState state){
+    public CompoundCollisionShape shapeFromBlockState(CompoundCollisionShape mesh, Vector3f vector3f, BlockState state){
         Array<BoundingBox> boundingBoxes = new Array<>();
         state.getAllBoundingBoxes(boundingBoxes, 0, 0, 0);
 
         if (boundingBoxes.size == 1) {
             com.jme3.bounding.BoundingBox boundingBox = ConversionUtil.toJME(boundingBoxes.get(0));
             mesh.addChildShape(new BoxCollisionShape(boundingBox.getExtent(null)), vector3f);
-            return;
+            return mesh;
         }
         while (!boundingBoxes.isEmpty()) {
             BoundingBox box = boundingBoxes.pop();
@@ -310,6 +310,7 @@ public class PhysicsThread implements TickingRunnable {
 
             mesh.addChildShape(shape, vector3f.add(new Vector3f(box.min.x, box.min.y, box.min.z)).subtract(0.5f, 0.5f, 0.5f).add(boundingBox.getExtent(new Vector3f())));
         }
+        return mesh;
     }
 
     boolean isCollideableState(BlockState state) {

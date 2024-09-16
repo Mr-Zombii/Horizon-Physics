@@ -1,10 +1,10 @@
 {
 	"textures": {
 		"back": {
-			"fileName": "horizon_physics:back.png"
+			"fileName": "horizon:back.png"
 		},
 		"base": {
-			"fileName": "horizon_physics:base.png"
+			"fileName": "horizon:base.png"
 		}
 	},
 	"cuboids": [{

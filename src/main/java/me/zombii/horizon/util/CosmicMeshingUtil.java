@@ -74,7 +74,7 @@ public class CosmicMeshingUtil {
                             if (completeCullMask != 63) {
                                 int opaqueBitmask = 0;
                                 Block block = b.getBlock();
-                                boolean cullsSelf = b.cullsSelf;
+                                boolean cullsSelf = b.cullsSelf();
                                 opaqueBitmask |= bnx != null && !bnx.isPosXFaceOccluding && (!cullsSelf || block != bnx.getBlock() || !bnx.isSelfPosXFaceOccluding) ? 0 : 1;
                                 opaqueBitmask |= bpx != null && !bpx.isNegXFaceOccluding && (!cullsSelf || block != bpx.getBlock() || !bpx.isSelfNegXFaceOccluding) ? 0 : 2;
                                 opaqueBitmask |= bny != null && !bny.isPosYFaceOccluding && (!cullsSelf || block != bny.getBlock() || !bny.isSelfPosYFaceOccluding) ? 0 : 4;
@@ -127,7 +127,7 @@ public class CosmicMeshingUtil {
 
                                 for(int i = 0; i < meshDatas.size; ++i) {
                                     MeshData candidate = meshDatas.get(i);
-                                    if (candidate.shader == shader && candidate.renderOrder == renderOrder) {
+                                    if (candidate.getShader() == shader && candidate.getRenderOrder() == renderOrder) {
                                         md = candidate;
                                         break;
                                     }
@@ -144,7 +144,7 @@ public class CosmicMeshingUtil {
                         }
                     }
                 }
-                ArrayUtils.removeIf(meshDatas, (mdx) -> mdx.vertices.isEmpty());
+                ArrayUtils.removeIf(meshDatas, (mdx) -> mdx.getVertices().isEmpty());
                 return meshDatas;
             }
         }

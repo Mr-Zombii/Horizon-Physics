@@ -48,5 +48,19 @@ public class MatrixUtil {
         transform.setTranslation(pos);
     }
 
+    public static void rotateAroundOrigin4(float s, Matrix4 transform, Vector3 pos, Quaternion angles) {
+        com.badlogic.gdx.math.Quaternion quaternion = new com.badlogic.gdx.math.Quaternion(angles.getX(), angles.getY(), angles.getZ(), angles.getW());
+        Matrix4 pivot = new Matrix4();
+        Vector3 c = new Vector3((pos.x) / 2, pos.y + s, (pos.z) / 2);
+        pivot.setToTranslation(c);
+        Matrix4 rot = new Matrix4();
+        rot.set(quaternion);
+        transform.idt();
+        transform.mul(pivot);
+        transform.mul(rot);
+        transform.mul(pivot.inv());
+        transform.setTranslation(pos);
+    }
+
 
 }

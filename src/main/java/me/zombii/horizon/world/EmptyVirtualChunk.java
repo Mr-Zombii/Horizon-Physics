@@ -1,6 +1,5 @@
 package me.zombii.horizon.world;
 
-import com.github.puzzle.core.Identifier;
 import me.zombii.horizon.util.Vec3i;
 import finalforeach.cosmicreach.blocks.Block;
 import finalforeach.cosmicreach.blocks.BlockState;
@@ -90,7 +89,7 @@ public class EmptyVirtualChunk extends VirtualChunk {
 
     public boolean isEntirelyOneBlockSelfCulling() {
         prunePalette();
-        return (palette.size() == 1) && isEntirely((b) -> b != null && b.cullsSelf);
+        return (palette.size() == 1) && isEntirely((b) -> b != null && b.cullsSelf());
     }
 
     public boolean isCulledByAdjacentChunks(Vec3i pos, VirtualWorld zone) {

@@ -1,4 +1,4 @@
-package me.zombii.horizon.entity;
+package me.zombii.horizon.entity.api;
 
 import me.zombii.horizon.world.VirtualWorld;
 

@@ -5,7 +5,10 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.OrientedBoundingBox;
-import com.github.puzzle.core.Identifier;
+import com.jme3.bullet.collision.shapes.CollisionShape;
+import finalforeach.cosmicreach.util.Identifier;
+import me.zombii.horizon.entity.api.IPhysicEntity;
+import me.zombii.horizon.entity.api.IVirtualWorldEntity;
 import me.zombii.horizon.util.Vec3i;
 import com.jme3.bullet.objects.PhysicsBody;
 import com.jme3.bullet.objects.PhysicsRigidBody;
@@ -81,7 +84,7 @@ public class WorldCube extends Entity implements IPhysicEntity, IVirtualWorldEnt
     public OrientedBoundingBox oBoundingBox = new OrientedBoundingBox();
 
     public WorldCube(VirtualWorld world) {
-        super(new Identifier(Constants.MOD_ID, "entity").toString());
+        super(Identifier.of(Constants.MOD_ID, "entity").toString());
         this.world = world;
         uuid = UUID.randomUUID();
         world.rebuildCollisionShape();
@@ -197,6 +200,11 @@ public class WorldCube extends Entity implements IPhysicEntity, IVirtualWorldEnt
     }
 
     @Override
+    public CollisionShape getCollisionShape() {
+        return world.CCS;
+    }
+
+    @Override
     public void setEularRotation(Quaternion rot) {
 
     }
@@ -208,6 +216,11 @@ public class WorldCube extends Entity implements IPhysicEntity, IVirtualWorldEnt
 
     @Override
     public void setMass(float mass) {
+
+    }
+
+    @Override
+    public void setCollisionShape(CollisionShape shape) {
 
     }
 

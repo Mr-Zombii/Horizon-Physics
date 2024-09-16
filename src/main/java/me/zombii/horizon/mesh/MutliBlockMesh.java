@@ -167,47 +167,6 @@ public class MutliBlockMesh implements IEntityModelInstance {
         }
     }
 
-
-
-    private Pair<GameMesh, GameShader>[] finalizeMeshes(MeshData[] meshData) {
-        Pair<GameMesh, GameShader>[] finalizedMeshes = new ImmutablePair[3];
-        for (int i = 0; i < 3; i++) {
-            MeshData data = meshData[i];
-
-            if (data != null) {
-                if (BlockModelJson.useIndices) {
-                    finalizedMeshes[i] = new ImmutablePair<>(data.toIntIndexedMesh(true), data.shader);
-                } else {
-                    finalizedMeshes[i] = new ImmutablePair<>(data.toSharedIndexMesh(true), data.shader);
-                    if (finalizedMeshes[i].getLeft() != null) {
-                        int numIndices = (finalizedMeshes[i].getLeft().getNumVertices() * 6) / 4;
-                        SharedQuadIndexData.allowForNumIndices(numIndices, false);
-                    }
-                }
-            }
-        }
-        return finalizedMeshes;
-    }
-
-    private MeshData[] sortData(Array<MeshData> data) {
-        MeshData[] sortedData = new MeshData[3];
-        for (int i = 0; i < data.size; i++) {
-            MeshData meshData = data.get(i);
-            switch (data.get(i).renderOrder) {
-                case FULLY_TRANSPARENT -> {
-                    sortedData[0] = meshData;
-                }
-                case PARTLY_TRANSPARENT -> {
-                    sortedData[1] = meshData;
-                }
-                case DEFAULT -> {
-                    sortedData[2] = meshData;
-                }
-            }
-        }
-        return sortedData;
-    }
-
     @Override
     public Color getCurrentAmbientColor() {
         return Color.WHITE.cpy();

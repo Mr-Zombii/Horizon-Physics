@@ -2,11 +2,10 @@ package me.zombii.horizon.items;
 
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Queue;
-import com.github.puzzle.core.Identifier;
-import com.github.puzzle.core.resources.ResourceLocation;
 import com.github.puzzle.game.items.IModItem;
 import com.github.puzzle.game.items.data.DataTagManifest;
 import com.github.puzzle.game.items.puzzle.BuilderWand;
+import finalforeach.cosmicreach.util.Identifier;
 import me.zombii.horizon.util.Vec3i;
 import finalforeach.cosmicreach.BlockSelection;
 import finalforeach.cosmicreach.blocks.BlockPosition;
@@ -28,14 +27,14 @@ public class MoonScepter implements IModItem {
 
     WANDMODES wandmode = WANDMODES.SELECTPOS;
     DataTagManifest tagManifest = new DataTagManifest();
-    Identifier id = new Identifier(Constants.MOD_ID, "scepter");
+    Identifier id = Identifier.of(Constants.MOD_ID, "scepter");
 
     public static Vector3 pos1 = null;
     public static Vector3 pos2 = null;
     boolean nextPos = false;
 
     public MoonScepter() {
-        addTexture(IModItem.MODEL_2_5D_ITEM, new ResourceLocation(Constants.MOD_ID, "textures/items/MoonSeptor-MagixLoader.png"));
+        addTexture(IModItem.MODEL_2_5D_ITEM, Identifier.of(Constants.MOD_ID, "textures/items/MoonSeptor-MagixLoader.png"));
     }
 
     public enum WANDMODES {
@@ -173,5 +172,10 @@ public class MoonScepter implements IModItem {
     @Override
     public boolean isCatalogHidden() {
         return false;
+    }
+
+    @Override
+    public String getName() {
+        return "Moon Scepter";
     }
 }

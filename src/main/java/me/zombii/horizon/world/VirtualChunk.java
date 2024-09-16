@@ -1,7 +1,6 @@
 package me.zombii.horizon.world;
 
 import com.badlogic.gdx.utils.Queue;
-import com.github.puzzle.core.Identifier;
 import me.zombii.horizon.util.Vec3i;
 import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.constants.Direction;
@@ -228,7 +227,7 @@ public class VirtualChunk {
 
     public boolean isEntirelyOneBlockSelfCulling() {
         prunePalette();
-        return (palette.size() == 1) && isEntirely((b) -> b != null && b.cullsSelf);
+        return (palette.size() == 1) && isEntirely((b) -> b != null && b.getModel().cullsSelf);
     }
 
     public boolean isCulledByAdjacentChunks(Vec3i pos, VirtualWorld zone) {

@@ -1,5 +1,6 @@
-package me.zombii.horizon.entity;
+package me.zombii.horizon.entity.api;
 
+import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.objects.PhysicsBody;
 import com.jme3.math.Quaternion;
 import finalforeach.cosmicreach.entities.Entity;
@@ -16,10 +17,12 @@ public interface IPhysicEntity {
     Quaternion getEularRotation();
     @NonNull UUID getUUID();
     float getMass();
+    CollisionShape getCollisionShape();
 
     void setEularRotation(Quaternion rot);
     void setUUID(UUID uuid);
     void setMass(float mass);
+    void setCollisionShape(CollisionShape shape);
 
     static <T> T readOrDefault(Supplier<T> read, T _default) {
         try {

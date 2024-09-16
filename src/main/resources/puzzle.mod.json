@@ -7,7 +7,7 @@
     "Mr-Zombii", "Soul"
   ],
   "meta": {
-    "icon": "assets/horizon_physics/icons/icon.png"
+    "icon": "assets/horizon/icons/icon.png"
   },
   "entrypoints": {
     "init": [

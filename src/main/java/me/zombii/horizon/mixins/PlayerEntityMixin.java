@@ -16,7 +16,7 @@ import finalforeach.cosmicreach.items.ItemBlock;
 import finalforeach.cosmicreach.settings.ControlSettings;
 import finalforeach.cosmicreach.ui.UI;
 import finalforeach.cosmicreach.world.Zone;
-import me.zombii.horizon.entity.IVirtualWorldEntity;
+import me.zombii.horizon.entity.api.IVirtualWorldEntity;
 import me.zombii.horizon.threading.PhysicsThread;
 import me.zombii.horizon.util.ConversionUtil;
 import me.zombii.horizon.util.InGameAccess;

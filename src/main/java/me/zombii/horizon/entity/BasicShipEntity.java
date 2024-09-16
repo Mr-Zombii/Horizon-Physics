@@ -4,10 +4,9 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.OrientedBoundingBox;
-import com.github.puzzle.core.Identifier;
-import finalforeach.cosmicreach.gamestates.InGame;
-import me.zombii.horizon.util.DebugRenderUtil;
-import me.zombii.horizon.util.InGameAccess;
+import com.jme3.bullet.collision.shapes.CollisionShape;
+import me.zombii.horizon.entity.api.IPhysicEntity;
+import me.zombii.horizon.entity.api.IVirtualWorldEntity;
 import me.zombii.horizon.util.Vec3i;
 import com.jme3.bullet.objects.PhysicsBody;
 import com.jme3.bullet.objects.PhysicsRigidBody;
@@ -223,6 +222,11 @@ public class BasicShipEntity extends Entity implements IPhysicEntity, IVirtualWo
     }
 
     @Override
+    public CollisionShape getCollisionShape() {
+        return world.CCS;
+    }
+
+    @Override
     public void setEularRotation(Quaternion rot) {
         this.rotation = rot;
     }
@@ -234,6 +238,11 @@ public class BasicShipEntity extends Entity implements IPhysicEntity, IVirtualWo
 
     @Override
     public void setMass(float mass) {
+
+    }
+
+    @Override
+    public void setCollisionShape(CollisionShape shape) {
 
     }
 
