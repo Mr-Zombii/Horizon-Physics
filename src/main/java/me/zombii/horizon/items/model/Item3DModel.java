@@ -126,7 +126,7 @@ public class Item3DModel implements IPuzzleItemModel {
 
 //        tmpHeldMat4.translate(0.6F, 0, 0);
 //        tmpHeldMat4.translate(0, -0.2F, 0);
-//        tmpHeldMat4.rotate(new Vector3(0, 0, 1), 20);
+        tmpHeldMat4.rotate(new Vector3(0, 0, 1), -20);
 //        tmpHeldMat4.rotate(new Vector3(1, 0, 0), 15);
         tmpHeldMat4.translate(0, -4, 0);
 

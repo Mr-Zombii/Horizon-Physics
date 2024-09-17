@@ -272,13 +272,9 @@ public class PhysicsThread implements TickingRunnable {
         for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 16; y++) {
                 for (int z = 0; z < 16; z++) {
-                    int globalX = chunk.blockX + x;
-                    int globalY = chunk.blockY + y;
-                    int globalZ = chunk.blockZ + z;
-
                     BlockState state = chunk.getBlockState(x, y, z);
                     if (!isCollideableState(state)) continue;
-                    shapeFromBlockState(mesh, new Vector3f(x, y, z), state);
+                    shapeFromBlockState(mesh, new Vector3f(x + 0.5f, y + 0.5f, z + 0.5f), state);
                 }
             }
         }
@@ -308,7 +304,7 @@ public class PhysicsThread implements TickingRunnable {
             com.jme3.bounding.BoundingBox boundingBox = ConversionUtil.toJME(box);
             BoxCollisionShape shape = new BoxCollisionShape(boundingBox.getExtent(null));
 
-            mesh.addChildShape(shape, vector3f.add(new Vector3f(box.min.x, box.min.y, box.min.z)).subtract(0.5f, 0.5f, 0.5f).add(boundingBox.getExtent(new Vector3f())));
+            mesh.addChildShape(shape, vector3f.add(new Vector3f(box.min.x, box.min.y, box.min.z)).add(boundingBox.getExtent(new Vector3f())));
         }
         return mesh;
     }

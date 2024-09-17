@@ -2,6 +2,10 @@ package me.zombii.horizon.items;
 
 import com.github.puzzle.game.items.IModItem;
 import com.github.puzzle.game.items.data.DataTagManifest;
+import com.jme3.bullet.collision.PhysicsRayTestResult;
+import finalforeach.cosmicreach.entities.Entity;
+import finalforeach.cosmicreach.entities.player.Player;
+import finalforeach.cosmicreach.items.ItemSlot;
 import finalforeach.cosmicreach.util.Identifier;
 import me.zombii.horizon.Constants;
 import me.zombii.horizon.items.api.I3DItem;

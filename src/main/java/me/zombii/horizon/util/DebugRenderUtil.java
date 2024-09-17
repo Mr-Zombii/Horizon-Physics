@@ -133,7 +133,7 @@ public class DebugRenderUtil {
             } else {
                 CollisionShape shape = child.getShape();
                 com.jme3.bounding.BoundingBox box = shape.boundingBox(new Vector3f(), new Quaternion(), new com.jme3.bounding.BoundingBox());
-                renderBoundingBox(sr, offs, rot, box);
+                renderBoundingBox(sr, box);
             }
         }
     }
@@ -196,21 +196,7 @@ public class DebugRenderUtil {
     }
 
     public static void renderBoundingBox(ShapeRenderer sr, com.jme3.bounding.BoundingBox box) {
-        Vector3 min = new Vector3();
-        Vector3 max = new Vector3();
-
-        Vector3f center = box.getCenter(new Vector3f());
-        Vector3f extents = box.getExtent(new Vector3f());
-
-        min.x = (center.x - extents.x);
-        min.y = (center.y - extents.y);
-        min.z = (center.z - extents.z);
-
-        max.x = (center.x + extents.x);
-        max.y = (center.y + extents.y);
-        max.z = (center.z + extents.z);
-
-        OrientedBoundingBox boundingBox = new OrientedBoundingBox(new BoundingBox(min, max));
+        OrientedBoundingBox boundingBox = new OrientedBoundingBox(ConversionUtil.fromJME(box));
 
         renderBoundingBox(sr, Color.GREEN, boundingBox);
     }

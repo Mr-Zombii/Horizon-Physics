@@ -30,7 +30,7 @@ public class PlayerEntityMixin extends Entity {
 
     @Override
     public void update(Zone zone, double delta) {
-        InGameAccess access = ((InGameAccess)InGame.IN_GAME);
+        InGameAccess access = InGameAccess.getAccess();
         float maxRaycastDist = ((float)Reflection.getFieldContents(access.getBlockSelection(), "maximumRaycastDist")) + 3;
 
         Vector3f playerHead = ConversionUtil.toJME(position.cpy().add(0, 1.5f, 0));

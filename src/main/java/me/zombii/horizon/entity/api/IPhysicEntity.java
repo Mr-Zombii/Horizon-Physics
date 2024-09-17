@@ -18,11 +18,20 @@ public interface IPhysicEntity {
     @NonNull UUID getUUID();
     float getMass();
     CollisionShape getCollisionShape();
+    default boolean isPickedUp() {
+        return false;
+    }
+    default boolean canBePickedUp() {
+        return false;
+    }
 
     void setEularRotation(Quaternion rot);
     void setUUID(UUID uuid);
     void setMass(float mass);
     void setCollisionShape(CollisionShape shape);
+    default void setPickedUp(boolean pickedUp) {}
+
+    default void onInteract() {}
 
     static <T> T readOrDefault(Supplier<T> read, T _default) {
         try {

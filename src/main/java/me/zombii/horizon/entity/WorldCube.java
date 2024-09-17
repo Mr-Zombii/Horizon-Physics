@@ -1,14 +1,20 @@
 package me.zombii.horizon.entity;
 
 import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.OrientedBoundingBox;
 import com.jme3.bullet.collision.shapes.CollisionShape;
+import finalforeach.cosmicreach.entities.player.Player;
+import finalforeach.cosmicreach.gamestates.GameState;
+import finalforeach.cosmicreach.gamestates.InGame;
 import finalforeach.cosmicreach.util.Identifier;
 import me.zombii.horizon.entity.api.IPhysicEntity;
 import me.zombii.horizon.entity.api.IVirtualWorldEntity;
+import me.zombii.horizon.util.DebugRenderUtil;
+import me.zombii.horizon.util.InGameAccess;
 import me.zombii.horizon.util.Vec3i;
 import com.jme3.bullet.objects.PhysicsBody;
 import com.jme3.bullet.objects.PhysicsRigidBody;
@@ -157,6 +163,7 @@ public class WorldCube extends Entity implements IPhysicEntity, IVirtualWorldEnt
             rigidBody.setMass(0);
             PhysicsThread.addEntity(this);
         }
+
         if (world.CCS_WAS_REBUILT) {
             System.out.println("rebuilding");
             PhysicsThread.INSTANCE.space.getRigidBodyList().forEach(e -> {
