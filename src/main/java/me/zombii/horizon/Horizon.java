@@ -28,6 +28,7 @@ import me.zombii.horizon.entity.WorldCube;
 import me.zombii.horizon.items.GravityGun;
 import me.zombii.horizon.items.MoonScepter;
 import me.zombii.horizon.items.PortalGun;
+import me.zombii.horizon.items.ToolGun;
 import me.zombii.horizon.items.api.I3DItem;
 import me.zombii.horizon.items.model.Item3DModel;
 import me.zombii.horizon.threading.MeshingThread;
@@ -65,6 +66,7 @@ public class Horizon implements ModInitializer {
         IModItem.registerItem(new MoonScepter());
         registerItem(new GravityGun());
         registerItem(new PortalGun());
+        registerItem(new ToolGun());
     }
 
     static <T extends I3DItem & IModItem & Item> T registerItem(T item) {

@@ -260,7 +260,7 @@ public class PhysicsThread implements TickingRunnable {
 
                     BlockState state = chunk.getBlockState(x, y, z);
                     if (!isCollideableState(state)) { continue; }
-                    shapeFromBlockState(mesh, new Vector3f(globalX, globalY, globalZ), state);
+                    shapeFromBlockState(mesh, new Vector3f(globalX, globalY, globalZ).add(0.5f, 0.5f, 0.5f), state);
                 }
             }
         }

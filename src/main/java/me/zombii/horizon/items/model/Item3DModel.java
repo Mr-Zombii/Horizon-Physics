@@ -5,11 +5,11 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
-import com.badlogic.gdx.graphics.g3d.Environment;
-import com.badlogic.gdx.graphics.g3d.Model;
-import com.badlogic.gdx.graphics.g3d.ModelBatch;
-import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.DepthTestAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.loader.G3dModelLoader;
 import com.badlogic.gdx.math.Matrix4;
@@ -50,20 +50,23 @@ public class Item3DModel implements IPuzzleItemModel {
             Threads.runOnMainThread(() -> {
                 loader = new G3dModelLoader(new JsonReader());
 
-                Model m = loader.loadModel(modelHandle);
-                modelInstance.set(new ModelInstance(m));
+                i3DItem.loadModel(loader, modelInstance);
             });
         } else {
             Threads.runOnMainThread(() -> {
                 synchronized (loader) {
-                    Model m = loader.loadModel(modelHandle);
-                    modelInstance.set(new ModelInstance(m));
+                    i3DItem.loadModel(loader, modelInstance);
                 }
             });
         }
 
         Threads.runOnMainThread(() -> {
             environment = new Environment();
+            Texture screenBG = PuzzleGameAssetLoader.LOADER.loadSync("horizon:models/items/g3dj/screen_bg.001.png", Texture.class);
+            Texture toolgun = PuzzleGameAssetLoader.LOADER.loadSync("horizon:models/items/g3dj/toolgun.png", Texture.class);
+            Texture toolgun2 = PuzzleGameAssetLoader.LOADER.loadSync("horizon:models/items/g3dj/toolgun2.png", Texture.class);
+            Texture toolgun3 = PuzzleGameAssetLoader.LOADER.loadSync("horizon:models/items/g3dj/toolgun3.png", Texture.class);
+
             environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
             environment.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f));
 
@@ -109,13 +112,14 @@ public class Item3DModel implements IPuzzleItemModel {
         tmpHeldMat4.translate(new Vector3(0, 0, 0));
         float swing;
         if (popUpTimer > 0) {
-            swing = (float)Math.pow(popUpTimer / maxPopUpTimer, 2.0);
+            swing = (float)Math.pow(popUpTimer / maxPopUpTimer, 2.0) / 2;
             tmpHeldMat4.translate(0, -1 * swing, 0);
         }
 
-        tmpHeldMat4.translate(1.65F, -1.25F, -2.5F);
-        tmpHeldMat4.rotate(Vector3.Y, -75);
+        tmpHeldMat4.translate(1.65F, -1.5F, -6.3F);
+        tmpHeldMat4.rotate(Vector3.Y, -94);
         tmpHeldMat4.translate(-0.25F, -0.25F, -0.25F);
+        tmpHeldMat4.rotate(Vector3.Z, 18);
         if (swingTimer > 0) {
             swing = swingTimer / maxSwingTimer;
             swing = 1 - (float)Math.pow(swing - 0.5F, 2.0) / 0.25F;
@@ -140,6 +144,7 @@ public class Item3DModel implements IPuzzleItemModel {
         matrix4.translate(0.5F, 0.2F, 0.5F);
         matrix4.scale(0.4f, 0.4f, 0.4f);
         renderGeneric(vector3, itemStack, camera, matrix4, false);
+        Gdx.gl.glEnable(GL30.GL_DEPTH_TEST);
         Gdx.gl.glEnable(GL30.GL_CULL_FACE);
     }
 
