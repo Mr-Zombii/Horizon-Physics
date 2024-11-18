@@ -10,7 +10,11 @@ import finalforeach.cosmicreach.rendering.SharedQuadIndexData;
 import finalforeach.cosmicreach.rendering.blockmodels.BlockModelJson;
 import finalforeach.cosmicreach.rendering.meshes.GameMesh;
 import finalforeach.cosmicreach.rendering.shaders.GameShader;
+import finalforeach.cosmicreach.world.Chunk;
+import me.zombii.horizon.mesh.IPhysicChunk;
 import me.zombii.horizon.util.CosmicMeshingUtil;
+import me.zombii.horizon.util.VCosmicMeshingUtil;
+import me.zombii.horizon.world.PhysicsZone;
 import me.zombii.horizon.world.VirtualChunk;
 import me.zombii.horizon.world.VirtualWorld;
 import org.slf4j.Logger;
@@ -25,6 +29,36 @@ public class MeshingThread implements Runnable {
     public static PauseableThread parent;
 
     static final Queue<Runnable> queuedRunnables = new Queue<>();
+
+    public static AtomicReference<VirtualChunkMeshMeta> post(AtomicReference<VirtualChunkMeshMeta> ref, PhysicsZone zone, Chunk chunk) {
+        if (chunk.blockData.isEntirely(Block.AIR.getDefaultBlockState()))
+            return ref;
+
+        queuedRunnables.addLast(() -> {
+            synchronized (ref) {
+                Threads.runOnMainThread(() -> {
+                    Array<MeshData> array = VCosmicMeshingUtil.getMeshData(zone, chunk);
+
+                    VirtualChunkMeshMeta data = ref.get() != null ? ref.get() : new VirtualChunkMeshMeta();
+
+                    if (array != null && !array.isEmpty()) {
+                        VirtualChunkMeshMeta meshData = MeshingThread.INSTANCE.buildChunkMeshMeta(data, array);
+                        ref.set(meshData);
+                    }
+                    ((IPhysicChunk) chunk).setNeedsRemeshing(false);
+                });
+            }
+        });
+
+        if (!started) start();
+        else parent.onResume();
+
+        return ref;
+    }
+
+    public static AtomicReference<VirtualChunkMeshMeta> post(PhysicsZone zone, Chunk chunk) {
+        return post(new AtomicReference<>(), zone, chunk);
+    }
 
     public static class VirtualChunkMeshMeta {
         public GameShader defaultLayerShader;

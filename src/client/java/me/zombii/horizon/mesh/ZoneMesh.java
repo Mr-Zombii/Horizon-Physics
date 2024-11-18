@@ -6,7 +6,6 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
-import me.zombii.horizon.util.Vec3i;
 import finalforeach.cosmicreach.blocks.Block;
 import finalforeach.cosmicreach.entities.Entity;
 import finalforeach.cosmicreach.rendering.SharedQuadIndexData;
@@ -16,29 +15,30 @@ import finalforeach.cosmicreach.rendering.entities.IEntityModel;
 import finalforeach.cosmicreach.rendering.entities.IEntityModelInstance;
 import finalforeach.cosmicreach.rendering.shaders.ChunkShader;
 import finalforeach.cosmicreach.rendering.shaders.GameShader;
+import finalforeach.cosmicreach.world.Chunk;
 import finalforeach.cosmicreach.world.Sky;
 import me.zombii.horizon.threading.MeshingThread;
-import me.zombii.horizon.world.VirtualChunk;
-import me.zombii.horizon.world.VirtualWorld;
+import me.zombii.horizon.util.Vec3i;
+import me.zombii.horizon.world.PhysicsZone;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MutliBlockMesh implements IEntityModelInstance, IHorizonMesh {
+public class ZoneMesh implements IEntityModelInstance, IHorizonMesh {
 
     GameShader shader;
-    VirtualWorld world;
+    PhysicsZone world;
 
     Map<Vec3i, AtomicReference<MeshingThread.VirtualChunkMeshMeta>> refMap = new HashMap<>();
 
-    public MutliBlockMesh(VirtualWorld world) {
+    public ZoneMesh(PhysicsZone world) {
         this.world = world;
-        world.propagateLight();
+//        world.propagateLight();
 
-        world.forEachChunk((pos, chunk) -> {
-            AtomicReference<MeshingThread.VirtualChunkMeshMeta> ref = MeshingThread.post(chunk);
-            refMap.put(pos, ref);
+        world.chunks.forEach((chunk) -> {
+            AtomicReference<MeshingThread.VirtualChunkMeshMeta> ref = MeshingThread.post(world, chunk);
+            refMap.put(new Vec3i(chunk.chunkX, chunk.chunkY, chunk.chunkZ), ref);
         });
 
         shader = ChunkShader.DEFAULT_BLOCK_SHADER;
@@ -75,28 +75,27 @@ public class MutliBlockMesh implements IEntityModelInstance, IHorizonMesh {
         Sky.currentSky.getSunDirection(sunDirection);
         sunDirection.rot(rotTmp);
 
-        world.forEachChunk((pos, chunk) -> {
+        world.chunks.forEach((chunk) -> {
+            Vec3i pos = new Vec3i(chunk.chunkX, chunk.chunkY, chunk.chunkZ);
+
             AtomicReference<MeshingThread.VirtualChunkMeshMeta> ref = refMap.get(pos);
 
-            if (chunk.isEntirely(Block.AIR.getDefaultBlockState()))
+            if (chunk.blockData.isEntirely(Block.AIR.getDefaultBlockState()))
                 return;
 
-            if (chunk.needsRemeshing) {
+            if (((IPhysicChunk) chunk).needsRemeshing()) {
                 if (ref == null) {
                     ref = new AtomicReference<>();
                     refMap.put(pos, ref);
                 };
-                MeshingThread.post(ref, chunk);
+                MeshingThread.post(ref, world, chunk);
             };
-            renderChunk(ref, chunk, camera, tmp);
-//            System.out.println(_entity.entityTypeId + " needs remeshing on chunk " + pos);
 
-//                MeshingThread.post(refMap.get(pos), chunk);
-//            }
+            renderChunk(ref, chunk, camera, tmp);
         });
     }
 
-    public void renderChunk(AtomicReference<MeshingThread.VirtualChunkMeshMeta> ref, VirtualChunk chunk, Camera camera, Matrix4 tmp) {
+    public void renderChunk(AtomicReference<MeshingThread.VirtualChunkMeshMeta> ref, Chunk chunk, Camera camera, Matrix4 tmp) {
         if (ref != null) {
             MeshingThread.VirtualChunkMeshMeta meta = ref.get();
 
@@ -104,7 +103,7 @@ public class MutliBlockMesh implements IEntityModelInstance, IHorizonMesh {
                 SharedQuadIndexData.bind();
             }
 
-            Vector3 batchPos = new Vector3(chunk.chunkPos.x() * 16, chunk.chunkPos.y() * 16, chunk.chunkPos.z() * 16);
+            Vector3 batchPos = new Vector3(chunk.chunkX * 16, chunk.chunkY * 16, chunk.chunkZ * 16);
             try {
                 this.shader = meta.defaultLayerShader;
 

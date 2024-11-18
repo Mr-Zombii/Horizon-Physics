@@ -5,16 +5,15 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "BoundingBoxMixin",
-    "InGameMixin",
-    "IntersectorMixin",
-    "MainMenuMixin",
-    "PauseMenuMixin",
     "CollisionMeshInvalidator",
-    "PlayerEntityMixin",
-    "ResumeToGameMixin"
+    "EntityPositionPacketMixin",
+    "IntersectorMixin",
+    "PlayerEntityMixin"
   ],
   "client": [],
-  "server": [],
+  "server": [
+    "ServerLauncherPhysicsLoader"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

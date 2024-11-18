@@ -22,7 +22,7 @@ import finalforeach.cosmicreach.world.Sky;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public class SingleBlockMesh implements IEntityModelInstance {
+public class SingleBlockMesh implements IEntityModelInstance, IHorizonMesh {
 
     GameShader shader;
     AtomicReference<BlockState> state;
@@ -125,5 +125,10 @@ public class SingleBlockMesh implements IEntityModelInstance {
     @Override
     public void setEntityModel(IEntityModel iEntityModel) {
 
+    }
+
+    @Override
+    public void setShouldRefresh(boolean shouldRefresh) {
+        needsRemeshing = shouldRefresh;
     }
 }

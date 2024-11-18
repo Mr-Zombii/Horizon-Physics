@@ -25,8 +25,19 @@ public field finalforeach/cosmicreach/items/loot/LootStack item
 public field finalforeach/cosmicreach/items/loot/LootStack minAmount
 public field finalforeach/cosmicreach/items/loot/LootStack maxAmount
 
-public field finalforeach/cosmicreach/io/CRBinDeserializer altSchemas
-public field finalforeach/cosmicreach/io/CRBinDeserializer strings
-public method finalforeach/cosmicreach/io/CRBinDeserializer readDataFromSchema (Lfinalforeach/cosmicreach/savelib/crbin/CRBinSchema;Ljava/nio/ByteBuffer;)V
-public field finalforeach/cosmicreach/io/CRBinDeserializer classDeserializers
-public field finalforeach/cosmicreach/io/CRBinDeserializer defaultClassDeserializers
+public field finalforeach/cosmicreach/savelib/crbin/CRBinDeserializer altSchemas
+public field finalforeach/cosmicreach/savelib/crbin/CRBinDeserializer strings
+public method finalforeach/cosmicreach/savelib/crbin/CRBinDeserializer readDataFromSchema (Lfinalforeach/cosmicreach/savelib/crbin/CRBinSchema;Ljava/nio/ByteBuffer;)V
+public field finalforeach/cosmicreach/savelib/crbin/CRBinDeserializer classDeserializers
+public field finalforeach/cosmicreach/savelib/crbin/CRBinDeserializer defaultClassDeserializers
+
+public field finalforeach/cosmicreach/savelib/crbin/CRBinSerializer defaultClassSerializers
+
+public field finalforeach/cosmicreach/networking/GamePacket idsToPackets
+public field finalforeach/cosmicreach/networking/GamePacket packetsToIntIds
+public field finalforeach/cosmicreach/networking/GamePacket packetNamesToIntIds
+public field finalforeach/cosmicreach/networking/GamePacket packetNamesToClasses
+
+public field finalforeach/cosmicreach/world/Zone chunks
+public field finalforeach/cosmicreach/world/Zone lightPropagator
+public-f method finalforeach/cosmicreach/world/Zone <init> (;)V
