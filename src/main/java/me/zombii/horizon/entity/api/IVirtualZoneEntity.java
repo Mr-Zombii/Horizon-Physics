@@ -89,6 +89,7 @@ public interface IVirtualZoneEntity {
                         return ByteArrayUtils.readShort(array);
                     }
                 }, entity.getWorld(), chunk);
+                entity.getWorld().addChunk(chunk);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

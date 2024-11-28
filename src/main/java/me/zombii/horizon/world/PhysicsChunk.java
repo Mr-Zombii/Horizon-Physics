@@ -40,6 +40,8 @@ public class PhysicsChunk extends Chunk implements IPhysicChunk {
 
     @Override
     public void setBlockState(BlockState blockState, int x, int y, int z) {
+        if (blockData == null) initChunkData();
+
         super.setBlockState(blockState, x, y, z);
         needsRemeshing = true;
     }

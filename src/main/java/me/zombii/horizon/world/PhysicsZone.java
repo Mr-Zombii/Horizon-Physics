@@ -2,18 +2,18 @@ package me.zombii.horizon.world;
 
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
-import com.badlogic.gdx.utils.Array;
 import com.github.puzzle.core.loader.util.Reflection;
 import com.github.puzzle.game.util.IClientNetworkManager;
 import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.collision.shapes.CompoundCollisionShape;
-import finalforeach.cosmicreach.lighting.LightPropagator;
-import finalforeach.cosmicreach.rendering.IMeshData;
+import finalforeach.cosmicreach.GameSingletons;
 import finalforeach.cosmicreach.world.*;
 import finalforeach.cosmicreach.worldgen.ZoneGenerator;
+import me.zombii.horizon.Constants;
 import me.zombii.horizon.threading.PhysicsThread;
 import me.zombii.horizon.util.APoint3dMap;
 
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PhysicsZone extends Zone {
@@ -34,6 +34,10 @@ public class PhysicsZone extends Zone {
 
         if (PhysicsThread.INSTANCE != null && !IClientNetworkManager.isConnected())
             CCS = new CompoundCollisionShape();
+    }
+
+    public static PhysicsZone create(UUID uuid) {
+        return new PhysicsZone(GameSingletons.world, uuid.toString(), ZoneGenerator.getZoneGenerator(Constants.MOD_ID + ":null"));
     }
 
     @Override

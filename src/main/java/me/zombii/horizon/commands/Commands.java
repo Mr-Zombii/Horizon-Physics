@@ -7,6 +7,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import finalforeach.cosmicreach.blocks.BlockState;
+import finalforeach.cosmicreach.blocks.MissingBlockStateResult;
 
 public class Commands {
 
@@ -22,7 +23,7 @@ public class Commands {
                                             int z = IntegerArgumentType.getInteger(context, "z");
                                             String blockState = StringArgumentType.getString(context, "blockstate");
 
-                                            BlockUtil.setBlockAt(context.getSource().getPlayer().getZone(), BlockState.getInstance(blockState), x, y, z);
+                                            BlockUtil.setBlockAt(context.getSource().getPlayer().getZone(), BlockState.getInstance(blockState, MissingBlockStateResult.MISSING_OBJECT), x, y, z);
                                             return 0;
                                         })
                                 )

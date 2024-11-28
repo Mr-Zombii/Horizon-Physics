@@ -4,6 +4,8 @@ import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.PauseableThread;
 import com.badlogic.gdx.utils.Queue;
+import com.github.puzzle.core.Constants;
+import com.github.puzzle.core.loader.meta.EnvType;
 import com.jme3.bullet.PhysicsSpace;
 import com.jme3.bullet.collision.shapes.BoxCollisionShape;
 import com.jme3.bullet.collision.shapes.CompoundCollisionShape;
@@ -86,7 +88,7 @@ public class PhysicsThread implements TickingRunnable {
     void physicsInit() {
         if (isInitialized) return;
         isInitialized = true;
-        boolean success = NativeLibraryLoader.loadLibbulletjme("Release", "Sp");
+        boolean success = NativeLibraryLoader.loadLibbulletjme(Constants.SIDE == EnvType.CLIENT, "Release", "Sp");
         if (!success) {
             throw new RuntimeException("Failed to load native library. Please contact nab138, he may need to add support for your platform.");
         }
@@ -350,20 +352,12 @@ public class PhysicsThread implements TickingRunnable {
         Array<BoundingBox> boundingBoxes = new Array<>();
         state.getAllBoundingBoxes(boundingBoxes, 0, 0, 0);
 
-        if (boundingBoxes.size == 1) {
-            com.jme3.bounding.BoundingBox boundingBox = ConversionUtil.toJME(boundingBoxes.get(0));
-            mesh.addChildShape(new BoxCollisionShape(boundingBox.getExtent(null)), vector3f);
-            return mesh;
-        }
-        vector3f = vector3f.subtract(0.5f, 0.5f, 0.5f);
-
-        while (!boundingBoxes.isEmpty()) {
-            BoundingBox box = boundingBoxes.pop();
-            com.jme3.bounding.BoundingBox boundingBox = ConversionUtil.toJME(box);
-            BoxCollisionShape shape = new BoxCollisionShape(boundingBox.getExtent(null));
-
-            mesh.addChildShape(shape, vector3f.add(new Vector3f(box.min.x, box.min.y, box.min.z)).add(boundingBox.getExtent(new Vector3f())));
-        }
+        boundingBoxes.forEach(b -> {
+            Vector3f halfExtents = new Vector3f((b.max.x - b.min.x) / 2, (b.max.y - b.min.y) / 2, (b.max.z - b.min.z) / 2);
+            Vector3f center = new Vector3f(b.getCenterX() - 0.5f, b.getCenterY() - 0.5f, b.getCenterZ() - 0.5f);
+            BoxCollisionShape boxShape = new BoxCollisionShape(halfExtents);
+            mesh.addChildShape(boxShape, vector3f.add(center));
+        });
         return mesh;
     }
 

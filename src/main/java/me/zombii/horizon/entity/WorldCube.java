@@ -8,6 +8,7 @@ import com.badlogic.gdx.math.collision.OrientedBoundingBox;
 import com.github.puzzle.game.util.IClientNetworkManager;
 import com.jme3.bullet.collision.shapes.CollisionShape;
 import finalforeach.cosmicreach.GameSingletons;
+import finalforeach.cosmicreach.blocks.MissingBlockStateResult;
 import finalforeach.cosmicreach.util.Identifier;
 import finalforeach.cosmicreach.world.Chunk;
 import finalforeach.cosmicreach.worldgen.ZoneGenerator;
@@ -55,10 +56,10 @@ public class WorldCube extends Entity implements IPhysicEntity, IVirtualZoneEnti
     public UUID uuid;
 
     public void generateChunk(Chunk chunk, Vec3i vec3i) {
-        BlockState air = BlockState.getInstance("base:air[default]");
-        BlockState stoneBlock = BlockState.getInstance("base:stone_basalt[default]");
+        BlockState air = BlockState.getInstance("base:air[default]", MissingBlockStateResult.MISSING_OBJECT);
+        BlockState stoneBlock = BlockState.getInstance("base:stone_basalt[default]", MissingBlockStateResult.MISSING_OBJECT);
 //        BlockState waterBlock = BlockState.getInstance("base:water[default]");
-        BlockState waterBlock = BlockState.getInstance("base:light[power=on,lightRed=0,lightGreen=15,lightBlue=0]");
+        BlockState waterBlock = BlockState.getInstance("base:light[power=on,lightRed=0,lightGreen=15,lightBlue=0]", MissingBlockStateResult.MISSING_OBJECT);
 
         for(int localX = 0; localX < 16; localX++) {
             int globalX = (vec3i.x() * 16) + localX;
@@ -109,7 +110,7 @@ public class WorldCube extends Entity implements IPhysicEntity, IVirtualZoneEnti
         if (uuid == null)
             uuid = UUID.randomUUID();
 
-        world = new PhysicsZone(GameSingletons.world, uuid.toString(), ZoneGenerator.getZoneGenerator(Constants.MOD_ID + ":null"));
+        world = PhysicsZone.create(uuid);
         if (!IClientNetworkManager.isConnected()) {
             for (int x = -2; x < 2; x++) {
                 for (int y = 0; y < 7; y++) {
@@ -131,14 +132,18 @@ public class WorldCube extends Entity implements IPhysicEntity, IVirtualZoneEnti
 
             body = new PhysicsRigidBody(world.CCS);
         }
-        Threads.runOnMainThread(() -> modelInstance = IMeshInstancer.createZoneMesh(world));
+        modelInstance = null;
+
+        if (!IClientNetworkManager.isConnected()) {
+            Threads.runOnMainThread(() -> modelInstance = IMeshInstancer.createZoneMesh(world));
+        }
 
         lastRotation = new Quaternion();
     }
 
     @Override
     public void render(Camera worldCamera) {
-        System.out.println(world.AABB);
+        if (modelInstance == null) return;
         MatrixUtil.rotateAroundOrigin2(oBoundingBox, transform, position, rotation);
 
         oBoundingBox.setBounds(world.AABB);
@@ -297,10 +302,11 @@ public class WorldCube extends Entity implements IPhysicEntity, IVirtualZoneEnti
         super.read(deserial);
 
         IPhysicEntity.read(this, deserial);
-
         IVirtualZoneEntity.read(this, deserial);
         world.recalculateBounds();
         getBoundingBox(localBoundingBox);
+
+        Threads.runOnMainThread(() -> modelInstance = IMeshInstancer.createZoneMesh(world));
     }
 
     @Override
@@ -308,7 +314,6 @@ public class WorldCube extends Entity implements IPhysicEntity, IVirtualZoneEnti
         super.write(serial);
 
         IPhysicEntity.write(this, serial);
-
         IVirtualZoneEntity.write(this, serial);
     }
 

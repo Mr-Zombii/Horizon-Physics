@@ -1,6 +1,7 @@
 package me.zombii.horizon.world;
 
 import com.badlogic.gdx.utils.Queue;
+import finalforeach.cosmicreach.blocks.MissingBlockStateResult;
 import me.zombii.horizon.util.Vec3i;
 import finalforeach.cosmicreach.blocks.BlockState;
 import finalforeach.cosmicreach.constants.Direction;
@@ -247,7 +248,7 @@ public class VirtualChunk {
 
     public static BlockState getInstance(String str) {
         if (blockStateCache.containsKey(str)) return blockStateCache.get(str);
-        blockStateCache.put(str, BlockState.getInstance(str));
+        blockStateCache.put(str, BlockState.getInstance(str, MissingBlockStateResult.MISSING_OBJECT));
         return blockStateCache.get(str);
     };
 

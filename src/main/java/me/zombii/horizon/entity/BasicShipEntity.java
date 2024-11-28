@@ -7,6 +7,7 @@ import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.OrientedBoundingBox;
 import com.github.puzzle.game.util.IClientNetworkManager;
 import com.jme3.bullet.collision.shapes.CollisionShape;
+import finalforeach.cosmicreach.blocks.MissingBlockStateResult;
 import finalforeach.cosmicreach.world.World;
 import me.zombii.horizon.entity.api.IPhysicEntity;
 import me.zombii.horizon.entity.api.IVirtualWorldEntity;
@@ -61,8 +62,8 @@ public class BasicShipEntity extends Entity implements IPhysicEntity, IVirtualWo
         VirtualChunk structure10 = new VirtualChunk((short) 0, new Vec3i(0, 0, -1));
         VirtualChunk structure11 = new VirtualChunk((short) 0, new Vec3i(-1, 0, -1));
 
-        BlockState stone = BlockState.getInstance("base:stone_basalt[default]");
-        BlockState chair = BlockState.getInstance(Constants.MOD_ID + ":chair[default]");
+        BlockState stone = BlockState.getInstance("base:stone_basalt[default]", MissingBlockStateResult.MISSING_OBJECT);
+        BlockState chair = BlockState.getInstance(Constants.MOD_ID + ":chair[default]", MissingBlockStateResult.MISSING_OBJECT);
         for (int x = 0; x < 8; x++) {
             for (int z = 0; z < 8; z++) {
                 structure00.setBlockState(stone, x, 0, z);

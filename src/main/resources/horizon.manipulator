@@ -40,4 +40,4 @@ public field finalforeach/cosmicreach/networking/GamePacket packetNamesToClasses
 
 public field finalforeach/cosmicreach/world/Zone chunks
 public field finalforeach/cosmicreach/world/Zone lightPropagator
-public-f method finalforeach/cosmicreach/world/Zone <init> (;)V
+public method finalforeach/cosmicreach/world/Zone <init> (;)V

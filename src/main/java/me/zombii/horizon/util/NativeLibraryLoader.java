@@ -17,8 +17,7 @@ import java.util.logging.Logger;
 public final class NativeLibraryLoader {
     public static final Logger logger = Logger.getLogger(NativeLibraryLoader.class.getName());
 
-
-    public static boolean loadLibbulletjme(String buildType, String flavor) {
+    public static boolean loadLibbulletjme(boolean isClient, String buildType, String flavor) {
         assert buildType.equals("Debug") || buildType.equals("Release") : buildType;
 
         assert flavor.equals("Sp") || flavor.equals("SpMt") || flavor.equals("SpMtQuickprof") || flavor.equals("SpQuickprof") || flavor.equals("Dp") || flavor.equals("DpMt") : flavor;
@@ -34,35 +33,24 @@ public final class NativeLibraryLoader {
         };
 
 
-        String fullName = name;
-
         boolean success = false;
         try {
             // have to use a stream
-            InputStream in = NativeLibraryLoader.class.getClassLoader().getResourceAsStream("natives/" + fullName);
-                    // always write to different location
-            File fileOut;
-            if (Constants.SIDE == EnvType.CLIENT) {
-                fileOut = new File(System.getProperty("java.io.tmpdir") + "/funni_blocks/natives/" + fullName);
-            } else {
-                fileOut = new File(SaveLocation.getSaveFolderLocation() + "/funni_blocks/natives/" + fullName);
-            }
+            InputStream in = NativeLibraryLoader.class.getClassLoader().getResourceAsStream("natives/" + name);
+            // always write to different location
+            File fileOut = new File(System.getProperty("java.io.tmpdir") + "/horizon/natives/" + (isClient ? "client/" : "server/") + name);
             logger.info("Writing native to: " + fileOut.getAbsolutePath());
-
-            if (!fileOut.exists()) {
-                OutputStream out = FileUtils.openOutputStream(fileOut);
-                assert in != null;
-                IOUtils.copy(in, out);
-                in.close();
-                out.close();
-            }
-
+            OutputStream out = FileUtils.openOutputStream(fileOut);
+            assert in != null;
+            IOUtils.copy(in, out);
+            in.close();
+            out.close();
             System.load(fileOut.toString());
             success = true;
             fileOut.deleteOnExit();
         } catch (Exception e) {
             e.printStackTrace();
-            logger.severe("Failed to load native library: " + fullName);
+            logger.severe("Failed to load native library: " + name);
         }
 
         return success;

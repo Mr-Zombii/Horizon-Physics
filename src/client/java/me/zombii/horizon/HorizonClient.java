@@ -1,6 +1,5 @@
 package me.zombii.horizon;
 
-import com.github.puzzle.core.loader.launch.provider.mod.entrypoint.impls.ClientModInitializer;
 import com.github.puzzle.core.loader.launch.provider.mod.entrypoint.impls.ClientPreModInitializer;
 import me.zombii.horizon.mesh.MeshInstancer;
 import me.zombii.horizon.threading.MeshingThread;
